@@ -14,9 +14,8 @@ import { GenericSelectorProps } from '$app/common/interfaces/generic-selector-pr
 import { ClientCreate } from '$app/pages/invoices/common/components/ClientCreate';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ComboboxAsync } from '../forms/Combobox';
 import { Alert } from '../Alert';
-import { endpoint } from '$app/common/helpers';
+import { DebouncedCombobox, Record } from '../forms/DebouncedCombobox';
 
 export interface ClientSelectorProps extends GenericSelectorProps<Client> {
   initiallyVisible?: boolean;
@@ -39,7 +38,7 @@ export function ClientSelector(props: ClientSelectorProps) {
         onClientCreated={(client) => props.onChange(client)}
       />
 
-      {/* <DebouncedCombobox
+      <DebouncedCombobox
         inputLabel={props.inputLabel}
         endpoint="/api/v1/clients"
         label="display_name"
@@ -60,9 +59,9 @@ export function ClientSelector(props: ClientSelectorProps) {
         clearInputAfterSelection={props.clearInputAfterSelection}
         disableWithSpinner={props.disableWithSpinner}
         errorMessage={props.errorMessage}
-      /> */}
+      />
 
-      <ComboboxAsync<Client>
+      {/*<ComboboxAsync<Client>
         inputOptions={{
           label: props.inputLabel?.toString(),
           value: props.value || null,
@@ -84,7 +83,7 @@ export function ClientSelector(props: ClientSelectorProps) {
         }}
         key="client_selector"
         // clearInputAfterFirstSelection
-      />
+      />*/}
 
       {props.errorMessage && (
         <Alert className="mt-2" type="danger">
