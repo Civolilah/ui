@@ -8,13 +8,20 @@
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
+import type { AuthoredDocumentData } from '@docuninja/builder2.0';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { useAtomValue } from 'jotai';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { invalidationQueryAtom } from '$app/common/atoms/data-table';
 import { docuNinjaEndpoint } from '$app/common/helpers';
 import { request } from '$app/common/helpers/request';
 import { toast } from '$app/common/helpers/toast/toast';
 import { $refetch } from '$app/common/hooks/useRefetch';
+import { Blueprint } from '$app/common/interfaces/docuninja/blueprints';
+import { GenericSingleResourceResponse } from '$app/common/interfaces/generic-api-response';
+import { ValidationBag } from '$app/common/interfaces/validation-bag';
 import { Params } from '../common/params.interface';
 
 export function useBlueprintsQuery(params: Params) {
@@ -108,5 +115,81 @@ export function useBulk() {
 
       $refetch(['blueprints']);
     });
+  };
+}
+interface CreateBlueprintParams {
+  name?: string;
+  base64_file?: string;
+  is_template?: boolean;
+  grapesjs?: AuthoredDocumentData;
+  template_kind?: Blueprint['template_kind'];
+}
+
+export function useCreateBlueprint() {
+  const queryClient = useQueryClient();
+  const invalidateQueryValue = useAtomValue(invalidationQueryAtom);
+  const [errors, setErrors] = useState<ValidationBag | undefined>(undefined);
+  const navigate = useNavigate();
+  return async (params: CreateBlueprintParams) => {
+    toast.processing();
+
+    return request('POST', docuNinjaEndpoint('/api/blueprints'), params, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('X-DOCU-NINJA-TOKEN')}`,
+      },
+    }).then((response) => {
+      toast.success('template_created');
+
+      invalidateQueryValue &&
+        queryClient.invalidateQueries({
+          queryKey: [invalidateQueryValue],
+        });
+
+      $refetch(['blueprints']);
+
+      return response;
+    });
+  };
+}
+
+interface UpdateBlueprintParams {
+  id: string;
+  name?: string;
+  base64_file?: string;
+  is_template?: boolean;
+  grapesjs?: AuthoredDocumentData;
+  template_kind?: Blueprint['template_kind'];
+}
+
+export function useUpdateBlueprint() {
+  const [errors, setErrors] = useState<ValidationBag | undefined>(undefined);
+
+  return async (params: UpdateBlueprintParams) => {
+    toast.processing();
+
+    request(
+      'PUT',
+      docuNinjaEndpoint('/api/blueprints/:id', { id: params.id }),
+      params,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('X-DOCU-NINJA-TOKEN')}`,
+        },
+      }
+    )
+      .then((response: GenericSingleResourceResponse<Blueprint>) => {
+        toast.success('template_updated');
+
+        $refetch(['blueprints']);
+
+        return response;
+      })
+      .catch((error: AxiosError<ValidationBag>) => {
+        if (error.response?.status === 422) {
+          setErrors(error.response.data);
+          toast.dismiss();
+        }
+      })
+      .finally();
   };
 }
