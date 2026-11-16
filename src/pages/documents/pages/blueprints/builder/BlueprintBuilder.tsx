@@ -12,12 +12,13 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMediaQuery } from 'react-responsive';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useColorScheme } from '$app/common/colors';
 import { docuNinjaEndpoint } from '$app/common/helpers';
 import { request } from '$app/common/helpers/request';
 import { route } from '$app/common/helpers/route';
 import { toast } from '$app/common/helpers/toast/toast';
+import { useCurrentCompanyDateFormats } from '$app/common/hooks/useCurrentCompanyDateFormats';
 import { useDriverTour } from '$app/common/hooks/useDriverTour';
 import { usePreferences } from '$app/common/hooks/usePreferences';
 import { $refetch } from '$app/common/hooks/useRefetch';
@@ -61,6 +62,7 @@ import {
   UploadDialog,
   ValidationErrors,
 } from '$app/pages/documents/builder/components';
+import { useEmbeddedBuilderEvents } from '$app/pages/documents/builder/useEmbeddedBuilderEvents';
 import { AsyncSignatorySelector } from '$app/pages/documents/common/components/AsyncSignatorySelector';
 import { useActions } from '../common/hooks/useActions';
 import { EditBlueprintModal } from '../edit/components/EditBlueprintModal';
@@ -224,6 +226,12 @@ function BlueprintBuilder() {
 
   const { data: blueprintResponse } = useBlueprintQuery({ id });
 
+  // Embedded in the Invoice Ninja app: the same events as the document
+  // builder (`common/helpers/embed.ts`).
+  useEmbeddedBuilderEvents(id);
+
+  const { dateFormat } = useCurrentCompanyDateFormats();
+
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [isDocumentSaving, setIsDocumentSaving] = useState<boolean>(false);
 
@@ -353,36 +361,12 @@ function BlueprintBuilder() {
     },
   });
 
-  const navigate = useNavigate();
-
   return (
     <Default
       title={t('')}
       breadcrumbs={pages}
       navigationTopRight={
         <div className="flex items-center gap-2">
-          {blueprint?.is_template && blueprint?.template && (
-            <Button
-              type="secondary"
-              behavior="button"
-              onClick={() => {
-                navigate(
-                  route('/docuninja/templates/:id/editor', {
-                    id,
-                    state: {
-                      templateHtml: blueprint.template,
-                      blueprintName: blueprint.name,
-                    },
-                  })
-                );
-              }}
-              disabled={isDocumentSaving}
-              disableWithoutIcon
-            >
-              {t('edit_template')}
-            </Button>
-          )}
-
           {blueprint && (
             <ResourceActions
               resource={blueprint}
@@ -523,6 +507,10 @@ function BlueprintBuilder() {
               (localStorage.getItem('DOCUNINJA_COMPANY_ID') as string) ||
               undefined,
             readonly: false,
+            defaultDateFormat: dateFormat as
+              | 'MM/DD/YYYY'
+              | 'DD/MM/YYYY'
+              | 'YYYY-MM-DD',
             services: {
               google: {
                 appId: import.meta.env.VITE_GOOGLE_APP_ID,

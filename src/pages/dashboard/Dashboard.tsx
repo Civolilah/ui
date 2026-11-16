@@ -11,17 +11,18 @@
 import { useAtomValue } from 'jotai';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ModuleBitmask } from '$app/common/enums/module-bitmask';
 import { useEnabled } from '$app/common/guards/guards/enabled';
 import { useOpenFeedbackSlider } from '$app/common/hooks/useOpenFeedbackSlider';
 import { reactSettingsAtom } from '$app/common/hooks/useReactSettings';
 import { useTitle } from '$app/common/hooks/useTitle';
 import { Activity } from '$app/pages/dashboard/components/Activity';
+import { NeedsAttention } from '$app/pages/dashboard/components/NeedsAttention';
 import { PastDueInvoices } from '$app/pages/dashboard/components/PastDueInvoices';
 import { RecentPayments } from '$app/pages/dashboard/components/RecentPayments';
 import { Totals } from '$app/pages/dashboard/components/Totals';
 import { UpcomingInvoices } from '$app/pages/dashboard/components/UpcomingInvoices';
 import { Default } from '../../components/layouts/Default';
-import { ModuleBitmask } from '../settings';
 import { ExpiredQuotes } from './components/ExpiredQuotes';
 import { UpcomingQuotes } from './components/UpcomingQuotes';
 import { UpcomingRecurringInvoices } from './components/UpcomingRecurringInvoices';
@@ -44,6 +45,8 @@ export default function Dashboard() {
 
   return (
     <Default title={t('dashboard')} breadcrumbs={[]}>
+      {enabled(ModuleBitmask.Invoices) && <NeedsAttention />}
+
       <Totals />
 
       <div className="grid grid-cols-12 gap-8 my-8">

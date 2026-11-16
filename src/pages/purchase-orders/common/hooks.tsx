@@ -27,7 +27,6 @@ import {
   MdPrint,
   MdRestore,
   MdSchedule,
-  MdSend,
   MdSwitchRight,
   MdTextSnippet,
 } from 'react-icons/md';
@@ -53,6 +52,7 @@ import { useDisableNavigation } from '$app/common/hooks/useDisableNavigation';
 import { useDisplayRunTemplateActions } from '$app/common/hooks/useDisplayRunTemplateActions';
 import { useEntityCustomFields } from '$app/common/hooks/useEntityCustomFields';
 import { useEntityPageIdentifier } from '$app/common/hooks/useEntityPageIdentifier';
+import { useResolveUserName } from '$app/common/hooks/useEntityUserFilters';
 import { useFormatCustomFieldValue } from '$app/common/hooks/useFormatCustomFieldValue';
 import { useFormatNumber } from '$app/common/hooks/useFormatNumber';
 import { useReactSettings } from '$app/common/hooks/useReactSettings';
@@ -87,6 +87,7 @@ import { PurchaseOrderStatus as PurchaseOrderStatusBadge } from '$app/pages/purc
 import { useChangeTemplate } from '$app/pages/settings/invoice-design/pages/custom-designs/components/ChangeTemplate';
 import { useStatusThemeColorScheme } from '$app/pages/settings/user/components/StatusColorTheme';
 import { CloneOptionsModal } from './components/CloneOptionsModal';
+import { EmailPurchaseOrderAction } from './components/EmailPurchaseOrderAction';
 
 interface CreateProps {
   isDefaultTerms: boolean;
@@ -191,12 +192,12 @@ export function useAllPurchaseOrderColumns() {
     'date',
     'due_date',
     'archived_at',
-    // 'assigned_to', @Todo: Need to resolve relationship
+    'assigned_user',
     // 'client', @Todo: Need to resolve relationship (client+po?)
     'contact_email',
     'contact_name',
     'created_at',
-    // 'created_by', @Todo: Need to resolve relationship
+    'user',
     firstCustom,
     secondCustom,
     thirdCustom,
@@ -225,6 +226,7 @@ export function usePurchaseOrderColumns() {
   const reactSettings = useReactSettings();
   const disableNavigation = useDisableNavigation();
   const formatCustomFieldValue = useFormatCustomFieldValue();
+  const resolveUserName = useResolveUserName();
 
   const purchaseOrderColumns = useAllPurchaseOrderColumns();
   type PurchaseOrderColumns = (typeof purchaseOrderColumns)[number];
@@ -470,6 +472,20 @@ export function usePurchaseOrderColumns() {
         format: (value) => formatNumber(value),
       },
       {
+        column: 'user',
+        id: 'user_id',
+        label: t('user'),
+        format: (value, purchaseOrder) =>
+          resolveUserName(purchaseOrder.user_id),
+      },
+      {
+        column: 'assigned_user',
+        id: 'assigned_user_id',
+        label: t('assigned_user'),
+        format: (value, purchaseOrder) =>
+          resolveUserName(purchaseOrder.assigned_user_id),
+      },
+      {
         column: 'tags',
         id: 'purchase_order_tag_ids',
         label: t('tags'),
@@ -577,19 +593,13 @@ export function useActions(params: ActionsParams = {}) {
       ),
     () => Boolean(showEditAction) && <Divider withoutPadding />,
     (purchaseOrder) => (
-      <EntityActionElement
+      <EmailPurchaseOrderAction
         {...(!dropdown && {
           key: 'send_email',
         })}
-        entity="purchase_order"
-        actionKey="send_email"
-        isCommonActionSection={!dropdown}
-        tooltipText={t('send_email')}
-        to={route('/purchase_orders/:id/email', { id: purchaseOrder.id })}
-        icon={MdSend}
-      >
-        {t('send_email')}
-      </EntityActionElement>
+        purchaseOrder={purchaseOrder}
+        isDropdown={dropdown}
+      />
     ),
     (purchaseOrder) => (
       <EntityActionElement

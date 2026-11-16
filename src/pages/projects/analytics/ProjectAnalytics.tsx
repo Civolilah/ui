@@ -11,6 +11,7 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useColorScheme } from '$app/common/colors';
+import { ModuleBitmask } from '$app/common/enums/module-bitmask';
 import { useEnabled } from '$app/common/guards/guards/enabled';
 import { useHasPermission } from '$app/common/hooks/permissions/useHasPermission';
 import { Project } from '$app/common/interfaces/project';
@@ -23,24 +24,26 @@ import {
   ProjectVelocityRow,
 } from '$app/common/interfaces/project-analytics';
 import { useProjectAnalyticsQuery } from '$app/common/queries/project-analytics';
-import { Spinner } from '$app/components/Spinner';
 import { TabGroup } from '$app/components/TabGroup';
 import { Burnup } from '$app/pages/projects/burnup/Burnup';
-import { ModuleBitmask } from '$app/pages/settings';
 import { AnalyticsCard } from './components/AnalyticsCard';
-import { AnalyticsStatCard } from './components/AnalyticsStatCard';
+import {
+  AnalyticsStatCard,
+  AnalyticsStatCardSkeleton,
+} from './components/AnalyticsStatCard';
 import { ForecastSummary } from './components/ForecastSummary';
 import { ANALYTICS_CHART_COLORS } from './constants';
 import { findProjectRow, getNestedRows } from './helpers';
 import { useFormatAnalyticsValue } from './hooks/useFormatAnalyticsValue';
 import { ChartsTab } from './tabs/ChartsTab';
-import { ProfitTab } from './tabs/ProfitTab';
 
 interface Props {
   project: Project;
   includeDrafts: boolean;
   overviewContent: (forecastCard: ReactNode) => ReactNode;
   tasksContent?: ReactNode;
+  invoicesContent?: ReactNode;
+  quotesContent?: ReactNode;
   expensesContent?: ReactNode;
   onCanViewFinancialsChange?: (canViewFinancials: boolean) => void;
 }
@@ -50,6 +53,8 @@ export function ProjectAnalytics({
   includeDrafts,
   overviewContent,
   tasksContent,
+  invoicesContent,
+  quotesContent,
   expensesContent,
   onCanViewFinancialsChange,
 }: Props) {
@@ -237,11 +242,28 @@ export function ProjectAnalytics({
       label: t('overview'),
       content: (
         <div className="space-y-4">
-          {hasAnalyticsData && (
+          {!analytics.isLoading && !hasAnalyticsData && (
+            <div
+              className="rounded-md border p-4 text-sm"
+              style={{
+                backgroundColor: colors.$1,
+                borderColor: colors.$24,
+                color: colors.$22,
+              }}
+            >
+              {t('no_project_analytics_data')}
+            </div>
+          )}
+
+          {(hasAnalyticsData || analytics.isLoading) && (
             <div className="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] gap-3">
-              {statCards.map((stat, index) => (
-                <AnalyticsStatCard key={index} {...stat} />
-              ))}
+              {analytics.isLoading
+                ? financialStatCards.map((_, index) => (
+                    <AnalyticsStatCardSkeleton key={index} />
+                  ))
+                : statCards.map((stat, index) => (
+                    <AnalyticsStatCard key={index} {...stat} />
+                  ))}
             </div>
           )}
 
@@ -257,6 +279,22 @@ export function ProjectAnalytics({
           },
         ]
       : []),
+    ...(invoicesContent
+      ? [
+          {
+            label: t('invoices'),
+            content: invoicesContent,
+          },
+        ]
+      : []),
+    ...(quotesContent
+      ? [
+          {
+            label: t('quotes'),
+            content: quotesContent,
+          },
+        ]
+      : []),
     ...(expensesContent
       ? [
           {
@@ -268,26 +306,17 @@ export function ProjectAnalytics({
     ...(canViewFinancials
       ? [
           {
-            label: t('money'),
-            content: sections && (
-              <ProfitTab
-                projectName={project.name}
-                profitability={sections.profitability}
-                budgetVsActual={sections.budgetVsActual}
-                invoiceProgress={sections.invoiceProgress}
-                formatter={formatValue}
-              />
-            ),
-          },
-        ]
-      : []),
-    ...(canViewFinancials
-      ? [
-          {
             label: t('charts'),
             content: sections && (
               <ChartsTab
                 showTimeCharts={showTaskTabs}
+                money={{
+                  projectName: project.name,
+                  profitability: sections.profitability,
+                  budgetVsActual: sections.budgetVsActual,
+                  invoiceProgress: sections.invoiceProgress,
+                  formatter: formatValue,
+                }}
                 time={{
                   projectName: project.name,
                   estimatedVsLogged: sections.estimatedVsLogged,
@@ -321,28 +350,6 @@ export function ProjectAnalytics({
 
   return (
     <section className="my-4 space-y-4">
-      {analytics.isLoading && (
-        <div
-          className="flex min-h-[160px] items-center justify-center rounded-md border"
-          style={{ backgroundColor: colors.$1, borderColor: colors.$24 }}
-        >
-          <Spinner />
-        </div>
-      )}
-
-      {!analytics.isLoading && !hasAnalyticsData && (
-        <div
-          className="rounded-md border p-4 text-sm"
-          style={{
-            backgroundColor: colors.$1,
-            borderColor: colors.$24,
-            color: colors.$22,
-          }}
-        >
-          {t('no_project_analytics_data')}
-        </div>
-      )}
-
       <TabGroup
         tabs={tabs.map((tab) => tab.label)}
         withoutVerticalMargin
