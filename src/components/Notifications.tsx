@@ -24,6 +24,7 @@ import { useCompanyTimeFormat } from '$app/common/hooks/useCompanyTimeFormat';
 import { useCurrentCompanyDateFormats } from '$app/common/hooks/useCurrentCompanyDateFormats';
 import { useCurrentCompanyUser } from '$app/common/hooks/useCurrentCompanyUser';
 import { useDisableNavigation } from '$app/common/hooks/useDisableNavigation';
+import { PermissionResource } from '$app/common/hooks/permissions/useHasPermission';
 import { useReactSettings } from '$app/common/hooks/useReactSettings';
 import { $refetch } from '$app/common/hooks/useRefetch';
 import { useReplaceVariables } from '$app/common/hooks/useReplaceTranslationVariables';
@@ -72,7 +73,18 @@ interface DisplayLabel {
   paymentId?: string;
   paymentNumber?: string;
   url?: string;
+  invoiceOwner?: PermissionResource;
+  clientOwner?: PermissionResource;
+  creditOwner?: PermissionResource;
+  paymentOwner?: PermissionResource;
 }
+
+const ownerOf = (resource: PermissionResource | undefined) => {
+  return {
+    user_id: resource?.user_id,
+    assigned_user_id: resource?.assigned_user_id,
+  };
+};
 
 export interface Notification {
   label: string;
@@ -155,7 +167,10 @@ export function Notifications() {
       return replaceVariables(
         t('notification_invoice_paid_subject') as string,
         {
-          invoice: disableNavigation('invoice', null) ? (
+          invoice: disableNavigation(
+            'invoice',
+            currentDisplayLabel.invoiceOwner
+          ) ? (
             `#${currentDisplayLabel.invoiceNumber}`
           ) : (
             <Link
@@ -167,7 +182,10 @@ export function Notifications() {
             </Link>
           ),
 
-          client: disableNavigation('client', null) ? (
+          client: disableNavigation(
+            'client',
+            currentDisplayLabel.clientOwner
+          ) ? (
             currentDisplayLabel.clientName
           ) : (
             <Link
@@ -184,7 +202,10 @@ export function Notifications() {
       return replaceVariables(
         t('notification_invoice_viewed_subject') as string,
         {
-          invoice: disableNavigation('invoice', null) ? (
+          invoice: disableNavigation(
+            'invoice',
+            currentDisplayLabel.invoiceOwner
+          ) ? (
             `#${currentDisplayLabel.invoiceNumber}`
           ) : (
             <Link
@@ -196,7 +217,10 @@ export function Notifications() {
             </Link>
           ),
 
-          client: disableNavigation('client', null) ? (
+          client: disableNavigation(
+            'client',
+            currentDisplayLabel.clientOwner
+          ) ? (
             currentDisplayLabel.clientName
           ) : (
             <Link
@@ -213,7 +237,10 @@ export function Notifications() {
       return replaceVariables(
         t('notification_credit_created_subject') as string,
         {
-          invoice: disableNavigation('credit', null) ? (
+          invoice: disableNavigation(
+            'credit',
+            currentDisplayLabel.creditOwner
+          ) ? (
             `#${currentDisplayLabel.creditNumber}`
           ) : (
             <Link
@@ -225,7 +252,10 @@ export function Notifications() {
             </Link>
           ),
 
-          client: disableNavigation('client', null) ? (
+          client: disableNavigation(
+            'client',
+            currentDisplayLabel.clientOwner
+          ) ? (
             currentDisplayLabel.clientName
           ) : (
             <Link
@@ -243,7 +273,7 @@ export function Notifications() {
         <div className="flex items-center space-x-1">
           <span>{t('credit_updated')}:</span>
 
-          {disableNavigation('credit', null) ? (
+          {disableNavigation('credit', currentDisplayLabel.creditOwner) ? (
             <span>{`#${currentDisplayLabel.creditNumber}`}</span>
           ) : (
             <Link
@@ -263,7 +293,7 @@ export function Notifications() {
         <div className="flex items-center space-x-1">
           <span>{t('payment_updated')}:</span>
 
-          {disableNavigation('payment', null) ? (
+          {disableNavigation('payment', currentDisplayLabel.paymentOwner) ? (
             <span>{`#${currentDisplayLabel.paymentNumber}`}</span>
           ) : (
             <Link
@@ -406,6 +436,8 @@ export function Notifications() {
             clientName: $invoice.client?.display_name,
             invoiceId: $invoice.id,
             clientId: $invoice.client_id,
+            invoiceOwner: ownerOf($invoice),
+            clientOwner: ownerOf($invoice.client),
           },
           date: dayjs().unix(),
           link: route(invoicePaths.edit, { id: $invoice.id }),
@@ -457,6 +489,8 @@ export function Notifications() {
             clientName: $invoice.client?.display_name,
             invoiceId: $invoice.id,
             clientId: $invoice.client_id,
+            invoiceOwner: ownerOf($invoice),
+            clientOwner: ownerOf($invoice.client),
           },
           date: dayjs().unix(),
           link: route(invoicePaths.edit, { id: $invoice.id }),
@@ -489,6 +523,8 @@ export function Notifications() {
             clientName: $credit.client?.display_name,
             creditId: $credit.id,
             clientId: $credit.client_id,
+            creditOwner: ownerOf($credit),
+            clientOwner: ownerOf($credit.client),
           },
           date: dayjs().unix(),
           link: route('/credits/:id/edit', { id: $credit.id }),
@@ -509,6 +545,7 @@ export function Notifications() {
             notificationType: 'creditWasUpdated' as const,
             creditNumber: $credit.number,
             creditId: $credit.id,
+            creditOwner: ownerOf($credit),
           },
           date: dayjs().unix(),
           link: route('/credits/:id/edit', { id: $credit.id }),
@@ -529,6 +566,7 @@ export function Notifications() {
             notificationType: 'paymentWasUpdated' as const,
             paymentNumber: payment.number,
             paymentId: payment.id,
+            paymentOwner: ownerOf(payment),
           },
           date: dayjs().unix(),
           link: route('/payments/:id/edit', { id: payment.id }),
@@ -611,11 +649,18 @@ export function Notifications() {
 
       return () => {
         unbindChannelLogging();
-        channel.unbind('App\\Events\\General\\GenericMessage', onGenericMessage);
+        channel.unbind(
+          'App\\Events\\General\\GenericMessage',
+          onGenericMessage
+        );
         sockets.unsubscribe(channel.name);
       };
     });
-  }, [sockets, reactSettings.preferences.enable_public_notifications, setNotifications]);
+  }, [
+    sockets,
+    reactSettings.preferences.enable_public_notifications,
+    setNotifications,
+  ]);
 
   if (
     isSelfHosted() &&

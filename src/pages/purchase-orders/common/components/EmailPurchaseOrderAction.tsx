@@ -54,6 +54,7 @@ export function EmailPurchaseOrderAction({
         onClose={() => setIsModalOpen(false)}
         relation="vendor"
         relationId={purchaseOrder.vendor_id}
+        relationResource={purchaseOrder.vendor}
       />
     </>
   );

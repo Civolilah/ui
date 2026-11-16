@@ -51,6 +51,7 @@ export function EmailQuoteAction({ quote, isDropdown = false }: Props) {
         onClose={() => setIsModalOpen(false)}
         relation="client"
         relationId={quote.client_id}
+        relationResource={quote.client}
       />
     </>
   );

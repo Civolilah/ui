@@ -59,6 +59,14 @@ export function PaymentOverviewInvoice(props: Props) {
   const disableNavigation = useDisableNavigation();
   const { dateFormat } = useCurrentCompanyDateFormats();
 
+  const invoice = props.payment.invoices?.find(
+    (invoice) => invoice.id === props.paymentable.invoice_id
+  );
+
+  const credit = props.payment.credits?.find(
+    (credit) => credit.id === props.paymentable.credit_id
+  );
+
   return (
     <>
       {props.paymentable.invoice_id && (
@@ -70,7 +78,7 @@ export function PaymentOverviewInvoice(props: Props) {
             <div className="flex items-center space-x-2">
               <span style={{ color: colors.$3 }}>{t('invoice')}</span>
 
-              {disableNavigation('invoice', null) ? (
+              {disableNavigation('invoice', invoice) ? (
                 <span style={{ color: colors.$3 }}>
                   {setLabel(props.payment, props.paymentable)}
                 </span>
@@ -134,7 +142,7 @@ export function PaymentOverviewInvoice(props: Props) {
             <div className="flex items-center space-x-2">
               <span style={{ color: colors.$3 }}>{t('credit')}</span>
 
-              {disableNavigation('credit', null) ? (
+              {disableNavigation('credit', credit) ? (
                 <span style={{ color: colors.$3 }}>
                   {setLabel(props.payment, props.paymentable, true)}
                 </span>

@@ -183,10 +183,6 @@ export function AddToInvoiceAction(props: Props) {
     }
   }, [visibleModal]);
 
-  if (!hasPermission('create_invoice') && !hasPermission('edit_invoice')) {
-    return null;
-  }
-
   return (
     <>
       <Modal

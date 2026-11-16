@@ -12,6 +12,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { route } from '$app/common/helpers/route';
 import { useHasPermission } from '$app/common/hooks/permissions/useHasPermission';
+import { Client } from '$app/common/interfaces/client';
+import { Vendor } from '$app/common/interfaces/vendor';
 import { Button } from '$app/components/forms';
 import { Modal } from '$app/components/Modal';
 
@@ -20,6 +22,7 @@ interface Props {
   onClose: () => void;
   relation: 'client' | 'vendor';
   relationId: string | undefined;
+  relationResource: Client | Vendor | undefined;
 }
 
 export function ContactEmailModal({
@@ -27,6 +30,7 @@ export function ContactEmailModal({
   onClose,
   relation,
   relationId,
+  relationResource,
 }: Props) {
   const [t] = useTranslation();
   const navigate = useNavigate();
@@ -41,7 +45,10 @@ export function ContactEmailModal({
           {isVendor ? t('vendor_email_not_set') : t('client_email_not_set')}.
         </span>
 
-        {hasPermission(isVendor ? 'edit_vendor' : 'edit_client') && (
+        {hasPermission(
+          isVendor ? 'edit_vendor' : 'edit_client',
+          relationResource
+        ) && (
           <Button
             className="self-end"
             onClick={() => {
