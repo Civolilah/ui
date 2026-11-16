@@ -38,11 +38,11 @@ export function useTableColumns() {
 
   const blueprintType = (blueprint: Blueprint) => {
     if (blueprint.template_kind === 'authored_document') {
-      return 'WYSIWYG document';
+      return t('wysiwyg_document');
     }
 
     if (blueprint.template_kind === 'uploaded_pdf') {
-      return 'Uploaded PDF';
+      return t('uploaded_pdf');
     }
 
     if (blueprint.design_hash?.length && blueprint.design_hash.length > 0) {

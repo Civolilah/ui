@@ -77,7 +77,7 @@ export function AuthoredBlueprintStep({
           setErrors(error.response.data);
           toast.dismiss();
         } else {
-          toast.error('Error creating document template');
+          toast.error('something_went_wrong');
         }
       })
       .finally(() => setIsCreating(false));
@@ -86,11 +86,8 @@ export function AuthoredBlueprintStep({
   return (
     <CardContainer>
       <div className="text-center">
-        <h2 className="text-xl font-semibold mb-2">Create document</h2>
-        <p className="text-gray-600">
-          Compose a flowing document and place signing widgets alongside its
-          content.
-        </p>
+        <h2 className="text-xl font-semibold mb-2">{t('create_document')}</h2>
+        <p className="text-gray-600">{t('create_document_description')}</p>
       </div>
 
       <Element leftSide={t('name')}>
@@ -125,9 +122,8 @@ export function AuthoredBlueprintStep({
           disabled={isCreating}
         >
           {t('create_template')}
-         </Button>
+        </Button>
       </div>
     </CardContainer>
   );
 }
-

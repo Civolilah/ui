@@ -131,9 +131,8 @@ function SelectionStep({
     },
     {
       id: 'authored',
-      title: 'Create document',
-      description:
-        'Compose a WYSIWYG document with flowing content and signing widgets.',
+      title: t('create_document'),
+      description: t('create_document_description'),
       icon: <Icon element={Edit3} size={32} />,
       onClick: onSelectAuthored,
     },
