@@ -66,7 +66,7 @@ export function useBlueprintQuery(params: BlueprintParams) {
     queryFn: () =>
       request(
         'GET',
-        docuNinjaEndpoint('/api/blueprints/:id?template=true', {
+        docuNinjaEndpoint('/api/blueprints/:id', {
           id: params.id,
         }),
         {},
@@ -117,7 +117,6 @@ export function useBulk() {
     });
   };
 }
-
 interface CreateBlueprintParams {
   name?: string;
   base64_file?: string;

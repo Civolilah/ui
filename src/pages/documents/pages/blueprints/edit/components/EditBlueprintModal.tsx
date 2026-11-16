@@ -50,7 +50,6 @@ export function EditBlueprintModal({ blueprint, isOpen, onClose }: Props) {
         'PUT',
         docuNinjaEndpoint('/api/blueprints/:id', { id: blueprint.id }),
         {
-          ...blueprint,
           name: formData.name,
           description: formData.description,
         },

@@ -2,3 +2,5 @@
   Content-Type: application/json
 /.well-known/assetlinks.json
   Content-Type: application/json
+/.well-known/webauthn
+  Content-Type: application/json
