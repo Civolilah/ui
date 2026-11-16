@@ -54,7 +54,8 @@ export function useHandleProductChange(props: Props) {
         ? product?.cost
         : product?.price || 0;
 
-    if (company.fill_products) {
+    // Task lines track logged hours and rate; auto-filling would overwrite both.
+    if (company.fill_products && props.type === 'product') {
       if (!company?.enable_product_quantity) {
         lineItem.quantity = 1;
       } else {
