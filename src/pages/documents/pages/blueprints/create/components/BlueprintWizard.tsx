@@ -17,9 +17,8 @@ import { Button } from '$app/components/forms';
 import { Icon } from '$app/components/icons/Icon';
 import { CustomBlueprintStep } from './steps/CustomBlueprintStep';
 import { InvoiceNinjaDesignStep } from './steps/InvoiceNinjaDesignStep';
-import { TemplateSelectionStep } from './steps/TemplateSelectionStep';
 
-export type WizardStep = 'selection' | 'invoice-ninja' | 'custom' | 'template';
+export type WizardStep = 'selection' | 'invoice-ninja' | 'custom';
 
 export interface BlueprintWizardProps {
   onComplete: (blueprintId: string) => void;
@@ -49,7 +48,6 @@ export function BlueprintWizard({
           <SelectionStep
             onSelectInvoiceNinja={() => setCurrentStep('invoice-ninja')}
             onSelectCustom={() => setCurrentStep('custom')}
-            onSelectTemplate={() => setCurrentStep('template')}
             onCancel={onCancel}
           />
         );
@@ -63,13 +61,6 @@ export function BlueprintWizard({
       case 'custom':
         return (
           <CustomBlueprintStep
-            onComplete={handleStepComplete}
-            onBack={handleBackToSelection}
-          />
-        );
-      case 'template':
-        return (
-          <TemplateSelectionStep
             onComplete={handleStepComplete}
             onBack={handleBackToSelection}
           />
@@ -96,14 +87,12 @@ export function BlueprintWizard({
 interface SelectionStepProps {
   onSelectInvoiceNinja: () => void;
   onSelectCustom: () => void;
-  onSelectTemplate: () => void;
   onCancel: () => void;
 }
 
 function SelectionStep({
   onSelectInvoiceNinja,
   onSelectCustom,
-  onSelectTemplate,
   onCancel,
 }: SelectionStepProps) {
   const [t] = useTranslation();
@@ -130,13 +119,6 @@ function SelectionStep({
       icon: <Icon element={Tool} size={32} />,
       onClick: onSelectCustom,
     },
-    // {
-    //   id: 'template',
-    //   title: t('templates'),
-    //   description: t('new_template_description'),
-    //   icon: <Icon element={Clipboard} size={32} />,
-    //   onClick: onSelectTemplate,
-    // },
   ];
 
   return (
