@@ -48,8 +48,25 @@ interface Props {
   setInvoice?: Dispatch<SetStateAction<Invoice | undefined>>;
 }
 
+interface PaymentMeansValues {
+  entity: Entity;
+  entity_id: string | undefined;
+  payment_means: {
+    code: string;
+    iban: string | null;
+    bic_swift: string;
+    payer_bank_account: string;
+    account_holder: string;
+    bsb_sort: string;
+    card_type: string;
+    card_number: string;
+    card_holder: string;
+  }[];
+}
+
 export interface PaymentMeansFormComponent {
-  saveEInvoice: () => Promise<boolean | undefined>;
+  getValues: () => PaymentMeansValues;
+  saveEInvoice: (values?: PaymentMeansValues) => Promise<boolean | undefined>;
 }
 
 interface PaymentMeans {
@@ -351,7 +368,42 @@ export const PaymentMeans = forwardRef<PaymentMeansFormComponent, Props>(
       });
     };
 
-    const form = useFormik({
+    const submitPaymentMeans = (values: PaymentMeansValues) => {
+      toast.processing();
+      setErrors(null);
+
+      return request(
+        'POST',
+        endpoint('/api/v1/einvoice/configurations'),
+        isClientLevel && !values.payment_means[0].code
+          ? { ...values, payment_means: [] }
+          : values
+      )
+        .then(() => {
+          toast.success('saved_einvoice_details');
+
+          if (isClientLevel) {
+            refreshClient();
+          }
+
+          return true;
+        })
+        .catch((error: AxiosError<ValidationBag>) => {
+          if (error.response?.status === 422) {
+            toast.dismiss();
+
+            setErrors(error.response.data);
+
+            return false;
+          }
+
+          toast.error();
+
+          return false;
+        });
+    };
+
+    const form = useFormik<PaymentMeansValues>({
       initialValues: {
         entity: props.entity,
         entity_id: props.entityId,
@@ -370,46 +422,23 @@ export const PaymentMeans = forwardRef<PaymentMeansFormComponent, Props>(
         ],
       },
       onSubmit: (values, { setSubmitting }) => {
-        toast.processing();
-        setErrors(null);
-
-        return request(
-          'POST',
-          endpoint('/api/v1/einvoice/configurations'),
-          isClientLevel && !values.payment_means[0].code
-            ? { ...values, payment_means: [] }
-            : values
-        )
-          .then(() => {
-            toast.success('saved_einvoice_details');
-
-            if (isClientLevel) {
-              refreshClient();
-            }
-
-            return true;
-          })
-          .catch((error: AxiosError<ValidationBag>) => {
-            if (error.response?.status === 422) {
-              toast.dismiss();
-
-              setErrors(error.response.data);
-
-              return false;
-            }
-
-            toast.error();
-
-            return false;
-          })
-          .finally(() => setSubmitting(false));
+        return submitPaymentMeans(values).finally(() => setSubmitting(false));
       },
     });
 
     useImperativeHandle(ref, () => {
       return {
-        saveEInvoice() {
-          return form.submitForm();
+        getValues() {
+          return form.values;
+        },
+        saveEInvoice(values) {
+          if (!values) {
+            return form.submitForm();
+          }
+
+          form.setValues(values, false);
+
+          return submitPaymentMeans(values);
         },
       };
     }, [form.values]);

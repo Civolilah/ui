@@ -241,13 +241,14 @@ export function EInvoice() {
 
     const pendingLineTemplate = getLineTemplate(company?.e_invoice);
     const storedLineTemplate = getLineTemplate(currentCompany?.e_invoice);
+    const paymentMeansValues = eInvoiceRef.current?.getValues();
 
     setIsSaving(true);
 
     try {
       const isCompanySaved = (await onSave()) !== false;
 
-      if (await eInvoiceRef?.current?.saveEInvoice()) {
+      if (await eInvoiceRef?.current?.saveEInvoice(paymentMeansValues)) {
         await restoreLineTemplate(
           isCompanySaved ? pendingLineTemplate : storedLineTemplate
         );
