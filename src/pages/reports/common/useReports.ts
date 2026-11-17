@@ -29,6 +29,7 @@ export interface Payload {
   tag_ids?: string;
   include_deleted?: boolean;
   pdf_email_attachment?: boolean;
+  xml_email_attachment?: boolean;
   activity_type_id?: string;
   template_id?: string;
   group_by?: string;
