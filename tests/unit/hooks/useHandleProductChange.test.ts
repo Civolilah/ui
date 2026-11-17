@@ -30,10 +30,11 @@ const product = {
   cost: 0,
   quantity: 3,
   notes: 'The Pro Plan',
-  tax_name1: '',
-  tax_rate1: 0,
-  custom_value1: '',
+  tax_name1: 'VAT',
+  tax_rate1: 20,
+  custom_value1: 'Product custom',
   custom_value4: '',
+  tax_id: '3',
 } as Product;
 
 const lineItem = (overrides: Partial<InvoiceItem> = {}) =>
@@ -47,6 +48,7 @@ const lineItem = (overrides: Partial<InvoiceItem> = {}) =>
     tax_rate1: 0,
     custom_value1: '',
     custom_value4: '',
+    tax_id: '1',
     ...overrides,
   }) as InvoiceItem;
 
@@ -66,8 +68,16 @@ const handleChange = (type: 'product' | 'task', item: InvoiceItem) => {
 };
 
 describe('useHandleProductChange', () => {
-  test('keeps logged hours and rate when a service is selected on a task line', async () => {
-    const { onChange, handler } = handleChange('task', lineItem());
+  test('keeps logged hours, rate, taxes and custom values on a task line', async () => {
+    const { onChange, handler } = handleChange(
+      'task',
+      lineItem({
+        tax_name1: 'GST',
+        tax_rate1: 10,
+        custom_value1: 'Task custom',
+        tax_id: '2',
+      })
+    );
 
     await handler(0, 'pro_plan', product);
 
@@ -78,14 +88,22 @@ describe('useHandleProductChange', () => {
         quantity: 5,
         cost: 100,
         notes: 'Tracked task',
+        tax_name1: 'GST',
+        tax_rate1: 10,
+        custom_value1: 'Task custom',
+        tax_id: '2',
       })
     );
   });
 
-  test('auto-fills quantity and cost on a product line', async () => {
+  test('fills an empty line item from the service', async () => {
     const { onChange, handler } = handleChange(
       'product',
-      lineItem({ notes: '' })
+      lineItem({
+        quantity: 0,
+        cost: 0,
+        notes: '',
+      })
     );
 
     await handler(0, 'pro_plan', product);
@@ -97,6 +115,32 @@ describe('useHandleProductChange', () => {
         quantity: 1,
         cost: 12,
         notes: 'The Pro Plan',
+        tax_name1: 'VAT',
+        tax_rate1: 20,
+        custom_value1: 'Product custom',
+        tax_id: '3',
+      })
+    );
+  });
+
+  test('does not overwrite taxes or custom values already on a product line', async () => {
+    const { onChange, handler } = handleChange(
+      'product',
+      lineItem({
+        tax_name1: 'GST',
+        tax_rate1: 10,
+        custom_value1: 'Line custom',
+      })
+    );
+
+    await handler(0, 'pro_plan', product);
+
+    expect(onChange).toHaveBeenCalledWith(
+      0,
+      expect.objectContaining({
+        tax_name1: 'GST',
+        tax_rate1: 10,
+        custom_value1: 'Line custom',
       })
     );
   });
