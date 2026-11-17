@@ -30,8 +30,11 @@ import { GenericManyResponse } from '$app/common/interfaces/generic-many-respons
 import { InvoiceActivity } from '$app/common/interfaces/invoice-activity';
 import { ValidationBag } from '$app/common/interfaces/validation-bag';
 import { Card, Element } from '$app/components/cards';
-import { withCreditReference } from '$app/components/e-invoice/line-fields/fields';
-import { Button, Link } from '$app/components/forms';
+import {
+  withCreditReference,
+  withOrderReference,
+} from '$app/components/e-invoice/line-fields/fields';
+import { Button, InputField, Link } from '$app/components/forms';
 import { Icon } from '$app/components/icons/Icon';
 import { InvoiceSelector } from '$app/components/invoices/InvoiceSelector';
 import {
@@ -135,6 +138,27 @@ export default function EInvoice() {
             current.e_invoice,
             number,
             date
+          ) as Credit['e_invoice'],
+        }
+    );
+  };
+
+  const orderReference =
+    get(credit, 'e_invoice.CreditNote.OrderReference.ID.value') || '';
+
+  const handleOrderReferenceChange = (value: string) => {
+    if (value === orderReference) {
+      return;
+    }
+
+    setCredit(
+      (current) =>
+        current && {
+          ...current,
+          e_invoice: withOrderReference(
+            current.e_invoice,
+            'CreditNote',
+            value
           ) as Credit['e_invoice'],
         }
     );
@@ -387,6 +411,25 @@ export default function EInvoice() {
           </Element>
         </Card>
       ) : null}
+
+      {company?.settings.e_invoice_type === 'PEPPOL' && (
+        <Card title={t('order_reference')}>
+          <Element
+            leftSide={t('order_number')}
+            leftSideHelp={t('order_reference_help')}
+          >
+            <InputField
+              changeOverride
+              debounceTimeout={0}
+              value={orderReference}
+              onValueChange={handleOrderReferenceChange}
+              errorMessage={
+                errors?.errors?.['e_invoice.OrderReference.ID.value']
+              }
+            />
+          </Element>
+        </Card>
+      )}
     </>
   );
 }

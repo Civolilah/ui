@@ -88,6 +88,7 @@ export function CloneOptionsModal(props: Props) {
       client: undefined,
       e_invoice: withOrderReference(
         invoice.e_invoice,
+        'Invoice',
         ''
       ) as Invoice['e_invoice'],
     });
@@ -151,7 +152,7 @@ export function CloneOptionsModal(props: Props) {
       design_id: company.settings.invoice_design_id,
       client: undefined,
       e_invoice: withLineEntries(
-        withOrderReference(invoice.e_invoice, ''),
+        withOrderReference(invoice.e_invoice, 'Invoice', ''),
         'Invoice',
         []
       ) as RecurringInvoice['e_invoice'],

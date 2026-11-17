@@ -27,6 +27,7 @@ import { CloneOption } from '$app/components/CloneOption';
 import {
   getLineEntries,
   withLineEntries,
+  withOrderReference,
 } from '$app/components/e-invoice/line-fields/fields';
 import { EntityActionElement } from '$app/components/EntityActionElement';
 import { FileClock } from '$app/components/icons/FileClock';
@@ -82,6 +83,11 @@ export function CloneOptionsModal({ credit, dropdown }: Props) {
       paid_to_date: 0,
       po_number: '',
       client: undefined,
+      e_invoice: withOrderReference(
+        credit.e_invoice,
+        'CreditNote',
+        ''
+      ) as Credit['e_invoice'],
     });
 
     setIsModalVisible(false);
@@ -180,7 +186,7 @@ export function CloneOptionsModal({ credit, dropdown }: Props) {
       design_id: company.settings.invoice_design_id,
       client: undefined,
       e_invoice: withLineEntries(
-        credit.e_invoice,
+        withOrderReference(credit.e_invoice, 'CreditNote', ''),
         'CreditNote',
         []
       ) as RecurringInvoice['e_invoice'],

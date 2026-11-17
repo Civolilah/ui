@@ -183,6 +183,7 @@ export default function EInvoice() {
           ...current,
           e_invoice: withOrderReference(
             current.e_invoice,
+            'Invoice',
             value
           ) as Invoice['e_invoice'],
         }

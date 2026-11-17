@@ -383,23 +383,27 @@ export const withCreditReference = (
   return next;
 };
 
-export const withOrderReference = (eInvoice: unknown, value: string) => {
+export const withOrderReference = (
+  eInvoice: unknown,
+  root: EInvoiceLinesRoot,
+  value: string
+) => {
   const next = asObject(eInvoice);
-  const invoice = asObject(next.Invoice);
+  const container = asObject(next[root]);
 
   if (value.trim()) {
-    invoice.OrderReference = {
-      ...asObject(invoice.OrderReference),
+    container.OrderReference = {
+      ...asObject(container.OrderReference),
       ID: { value },
     };
   } else {
-    delete invoice.OrderReference;
+    delete container.OrderReference;
   }
 
-  if (isEmpty(invoice)) {
-    delete next.Invoice;
+  if (isEmpty(container)) {
+    delete next[root];
   } else {
-    next.Invoice = invoice;
+    next[root] = container;
   }
 
   return next;
