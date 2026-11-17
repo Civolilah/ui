@@ -179,6 +179,8 @@ export function ClientCreate({
       visible={isModalOpen}
       onClose={() => handleClose(false)}
       size="extraSmall"
+      zIndex={1200}
+      portal
       renderTransitionChildAsFragment
       overflowVisible
       withoutVerticalMargin

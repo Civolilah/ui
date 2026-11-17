@@ -88,6 +88,14 @@ export default function Blueprints() {
         showArchive={() => false}
         showRestore={() => false}
         showDelete={() => false}
+        emptyState={
+          <div className="py-10 text-center">
+            <p className="font-medium">{t('no_templates_found')}</p>
+            <p className="mt-1 text-sm text-gray-500">
+              {t('no_templates_yet_description')}
+            </p>
+          </div>
+        }
       />
 
       {selectedBlueprint && (

@@ -24,6 +24,10 @@ import { PurchaseOrder } from '$app/common/interfaces/purchase-order';
 import { Quote } from '$app/common/interfaces/quote';
 import { RecurringInvoice } from '$app/common/interfaces/recurring-invoice';
 import { CloneOption } from '$app/components/CloneOption';
+import {
+  getLineEntries,
+  withLineEntries,
+} from '$app/components/e-invoice/line-fields/fields';
 import { EntityActionElement } from '$app/components/EntityActionElement';
 import { FileClock } from '$app/components/icons/FileClock';
 import { Files } from '$app/components/icons/Files';
@@ -108,6 +112,11 @@ export function CloneOptionsModal({ quote, dropdown }: Props) {
       paid_to_date: 0,
       design_id: company.settings.credit_design_id,
       client: undefined,
+      e_invoice: withLineEntries(
+        withLineEntries(quote.e_invoice, 'Invoice', []),
+        'CreditNote',
+        getLineEntries(quote.e_invoice, 'Invoice')
+      ) as Quote['e_invoice'],
     });
 
     setIsModalVisible(false);
@@ -135,6 +144,11 @@ export function CloneOptionsModal({ quote, dropdown }: Props) {
       partial_due_date: '',
       design_id: company.settings.invoice_design_id,
       client: undefined,
+      e_invoice: withLineEntries(
+        quote.e_invoice,
+        'Invoice',
+        []
+      ) as RecurringInvoice['e_invoice'],
     });
 
     setIsModalVisible(false);

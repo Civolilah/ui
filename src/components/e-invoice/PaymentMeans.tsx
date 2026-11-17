@@ -28,7 +28,6 @@ import { request } from '$app/common/helpers/request';
 import { toast } from '$app/common/helpers/toast/toast';
 import { useCurrentCompany } from '$app/common/hooks/useCurrentCompany';
 import { $refetch } from '$app/common/hooks/useRefetch';
-import { useRefreshCompanyUsers } from '$app/common/hooks/useRefreshCompanyUsers';
 import { Client } from '$app/common/interfaces/client';
 import { GenericSingleResourceResponse } from '$app/common/interfaces/generic-api-response';
 import { Invoice } from '$app/common/interfaces/invoice';
@@ -49,8 +48,25 @@ interface Props {
   setInvoice?: Dispatch<SetStateAction<Invoice | undefined>>;
 }
 
-interface PaymentMeansFormComponent {
-  saveEInvoice: () => void;
+interface PaymentMeansValues {
+  entity: Entity;
+  entity_id: string | undefined;
+  payment_means: {
+    code: string;
+    iban: string | null;
+    bic_swift: string;
+    payer_bank_account: string;
+    account_holder: string;
+    bsb_sort: string;
+    card_type: string;
+    card_number: string;
+    card_holder: string;
+  }[];
+}
+
+export interface PaymentMeansFormComponent {
+  getValues: () => PaymentMeansValues;
+  saveEInvoice: (values?: PaymentMeansValues) => Promise<boolean | undefined>;
 }
 
 interface PaymentMeans {
@@ -329,7 +345,6 @@ export const PaymentMeans = forwardRef<PaymentMeansFormComponent, Props>(
     const [t] = useTranslation();
 
     const dispatch = useDispatch();
-    const refreshCompanyUsers = useRefreshCompanyUsers();
 
     const isClientLevel = props.entity === 'client';
     const eInvoice = isClientLevel ? props.currentEInvoice : company.e_invoice;
@@ -353,7 +368,42 @@ export const PaymentMeans = forwardRef<PaymentMeansFormComponent, Props>(
       });
     };
 
-    const form = useFormik({
+    const submitPaymentMeans = (values: PaymentMeansValues) => {
+      toast.processing();
+      setErrors(null);
+
+      return request(
+        'POST',
+        endpoint('/api/v1/einvoice/configurations'),
+        isClientLevel && !values.payment_means[0].code
+          ? { ...values, payment_means: [] }
+          : values
+      )
+        .then(() => {
+          toast.success('saved_einvoice_details');
+
+          if (isClientLevel) {
+            refreshClient();
+          }
+
+          return true;
+        })
+        .catch((error: AxiosError<ValidationBag>) => {
+          if (error.response?.status === 422) {
+            toast.dismiss();
+
+            setErrors(error.response.data);
+
+            return false;
+          }
+
+          toast.error();
+
+          return false;
+        });
+    };
+
+    const form = useFormik<PaymentMeansValues>({
       initialValues: {
         entity: props.entity,
         entity_id: props.entityId,
@@ -372,46 +422,23 @@ export const PaymentMeans = forwardRef<PaymentMeansFormComponent, Props>(
         ],
       },
       onSubmit: (values, { setSubmitting }) => {
-        toast.processing();
-        setErrors(null);
-
-        request(
-          'POST',
-          endpoint('/api/v1/einvoice/configurations'),
-          isClientLevel && !values.payment_means[0].code
-            ? { ...values, payment_means: [] }
-            : values
-        )
-          .then(() => {
-            toast.success('saved_einvoice_details');
-
-            if (isClientLevel) {
-              refreshClient();
-
-              return;
-            }
-
-            refreshCompanyUsers();
-          })
-          .catch((error: AxiosError<ValidationBag>) => {
-            if (error.response?.status === 422) {
-              toast.dismiss();
-
-              setErrors(error.response.data);
-
-              return;
-            }
-
-            toast.error();
-          })
-          .finally(() => setSubmitting(false));
+        return submitPaymentMeans(values).finally(() => setSubmitting(false));
       },
     });
 
     useImperativeHandle(ref, () => {
       return {
-        saveEInvoice() {
-          form.submitForm();
+        getValues() {
+          return form.values;
+        },
+        saveEInvoice(values) {
+          if (!values) {
+            return form.submitForm();
+          }
+
+          form.setValues(values, false);
+
+          return submitPaymentMeans(values);
         },
       };
     }, [form.values]);
