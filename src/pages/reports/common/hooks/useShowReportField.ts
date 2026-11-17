@@ -26,6 +26,7 @@ type Field =
   | 'include_deleted'
   | 'client'
   | 'pdf_email_attachment'
+  | 'xml_email_attachment'
   | 'template_id'
   | 'activity_type_id'
   | 'group_by';
@@ -43,6 +44,7 @@ const ReportFields: Record<Identifier, Field[]> = {
     'include_deleted',
     'client',
     'pdf_email_attachment',
+    'xml_email_attachment',
     'template_id',
     'group_by',
   ],
