@@ -8,6 +8,7 @@
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
+import type { AuthoredDocumentData } from '@docuninja/builder2.0';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { useAtomValue } from 'jotai';
@@ -65,7 +66,7 @@ export function useBlueprintQuery(params: BlueprintParams) {
     queryFn: () =>
       request(
         'GET',
-        docuNinjaEndpoint('/api/blueprints/:id?template=true', {
+        docuNinjaEndpoint('/api/blueprints/:id', {
           id: params.id,
         }),
         {},
@@ -116,12 +117,12 @@ export function useBulk() {
     });
   };
 }
-
 interface CreateBlueprintParams {
   name?: string;
   base64_file?: string;
   is_template?: boolean;
-  grapesjs?: string;
+  grapesjs?: AuthoredDocumentData;
+  template_kind?: Blueprint['template_kind'];
 }
 
 export function useCreateBlueprint() {
@@ -156,7 +157,8 @@ interface UpdateBlueprintParams {
   name?: string;
   base64_file?: string;
   is_template?: boolean;
-  grapesjs?: string;
+  grapesjs?: AuthoredDocumentData;
+  template_kind?: Blueprint['template_kind'];
 }
 
 export function useUpdateBlueprint() {

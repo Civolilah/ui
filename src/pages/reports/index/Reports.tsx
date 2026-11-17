@@ -611,6 +611,17 @@ export default function Reports() {
             </Element>
           )}
 
+          {showReportField('xml_email_attachment') && (
+            <Element leftSide={t('attach_xml')}>
+              <Toggle
+                checked={report.payload.xml_email_attachment}
+                onValueChange={(value) =>
+                  handlePayloadChange('xml_email_attachment', value)
+                }
+              />
+            </Element>
+          )}
+
           {showReportField('is_expense_billed') && (
             <Element leftSide={t('expense_paid_report')}>
               <Toggle

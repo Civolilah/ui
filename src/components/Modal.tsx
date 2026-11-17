@@ -11,6 +11,7 @@
 import { Dialog, Transition } from '@headlessui/react';
 import classNames from 'classnames';
 import { Fragment, ReactNode, RefObject, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useColorScheme } from '$app/common/colors';
 import { XMark } from './icons/XMark';
 
@@ -35,6 +36,8 @@ interface Props {
   withoutVerticalMargin?: boolean;
   withoutHorizontalPadding?: boolean;
   enableClosingOnXMark?: boolean;
+  zIndex?: number;
+  portal?: boolean;
 }
 
 interface TransitionChildProps {
@@ -73,11 +76,12 @@ export function Modal(props: Props) {
 
   const colors = useColorScheme();
 
-  return (
+  const modal = (
     <Transition.Root show={open} as={Fragment}>
       <Dialog
         as="div"
         className="fixed z-10 inset-0 overflow-y-auto"
+        style={props.zIndex ? { zIndex: props.zIndex } : undefined}
         onClose={(value) => {
           (!disableClosing || enableCloseOnClickAway) && setOpen(value);
           (!disableClosing || enableCloseOnClickAway) && props.onClose(value);
@@ -217,4 +221,6 @@ export function Modal(props: Props) {
       </Dialog>
     </Transition.Root>
   );
+
+  return props.portal ? createPortal(modal, document.body) : modal;
 }
