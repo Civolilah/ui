@@ -33,6 +33,7 @@ export default function TaskColumns() {
     { value: '$task.tax_amount', label: t('tax_amount') },
     { value: '$task.discount', label: t('discount') },
     { value: '$task.line_total', label: t('line_total') },
+    { value: '$task.tags', label: t('tags') },
     {
       value: '$task.task1',
       label: customField('task1').label() || t('custom1'),

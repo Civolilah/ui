@@ -44,6 +44,7 @@ export default function PurchaseOrderDetails() {
       value: '$purchase_order.custom4',
       label: customField('invoice4').label() || t('custom4'),
     },
+    { value: '$purchase_order.tags', label: t('tags') },
     { value: '$purchase_order.balance_due', label: t('balance_due') },
   ];
 

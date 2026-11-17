@@ -21,11 +21,11 @@ export function isActiveTag(tag: Tag) {
   return !tag.is_deleted && !tag.archived_at;
 }
 
-export function tagPillColor(tag: Tag) {
+export function tagPillColor(tag: { color?: string | null }) {
   return tag.color || '#64748b';
 }
 
-export function tagPillBackgroundColor(tag: Tag) {
+export function tagPillBackgroundColor(tag: { color?: string | null }) {
   const color = tagPillColor(tag);
 
   if (/^#[0-9a-fA-F]{3}$/.test(color)) {

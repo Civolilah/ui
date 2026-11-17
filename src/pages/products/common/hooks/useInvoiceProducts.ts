@@ -11,6 +11,7 @@
 import { useSetAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 import { blankLineItem } from '$app/common/constants/blank-line-item';
+import { productLineItemTags } from '$app/common/helpers/line-item-tags';
 import { useInvoiceEditorPaths } from '$app/common/hooks/useInvoiceEditor';
 import { useCurrentCompany } from '$app/common/hooks/useCurrentCompany';
 import { useUserNumberPrecision } from '$app/common/hooks/useUserNumberPrecision';
@@ -42,6 +43,7 @@ export const useInvoiceProducts = (params?: Params) => {
         ...blankLineItem(),
         type_id: InvoiceItemType.Product,
         product_key: product.product_key,
+        tags: productLineItemTags(product),
         quantity: company?.fill_products ? product.quantity : 1,
         ...(company?.fill_products && {
           line_total: Number(

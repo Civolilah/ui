@@ -54,6 +54,7 @@ export default function ClientDetails() {
       value: '$client.custom4',
       label: customField('client4').label() || t('custom4'),
     },
+    { value: '$client.tags', label: t('tags') },
     { value: '$contact.full_name', label: t('contact_full_name') },
     { value: '$contact.email', label: t('contact_email') },
     { value: '$contact.phone', label: t('contact_phone') },

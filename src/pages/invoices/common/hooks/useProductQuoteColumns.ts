@@ -212,6 +212,10 @@ export function useProductQuoteColumns() {
       (variable) => variable !== '$product.net_cost'
     );
 
+    updatedVariables = updatedVariables.filter(
+      (variable) => variable !== '$product.tags'
+    );
+
     setColumns(updatedVariables);
   }, [company]);
 

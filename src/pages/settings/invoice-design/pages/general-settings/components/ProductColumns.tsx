@@ -37,6 +37,7 @@ export default function ProductColumns() {
     { value: '$product.tax', label: t('tax') },
     { value: '$product.discount', label: t('discount') },
     { value: '$product.line_total', label: t('line_total') },
+    { value: '$product.tags', label: t('tags') },
     {
       value: '$product.product1',
       label: company?.custom_fields?.product1

@@ -15,6 +15,7 @@ import { useFormatMoney } from '$app/common/hooks/money/useFormatMoney';
 import { Product } from '$app/common/interfaces/product';
 import { InputField, InputLabel } from '$app/components/forms';
 import { Spinner } from '$app/components/Spinner';
+import { TagPills } from '$app/components/tags/TagPills';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -248,6 +249,8 @@ export function ItemDescriptionField({
                     {product.notes}
                   </span>
                 ) : null}
+
+                <TagPills tags={product.tags} className="mt-1" />
               </div>
 
               <span

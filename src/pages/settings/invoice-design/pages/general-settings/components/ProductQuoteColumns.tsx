@@ -54,6 +54,7 @@ export default function ProductQuoteColumns() {
     { value: '$product.unit_cost', label: t('unit_cost') },
     { value: '$product.discount', label: t('discount') },
     { value: '$product.tax', label: t('tax') },
+    { value: '$product.tags', label: t('tags') },
   ];
 
   useEffect(() => {

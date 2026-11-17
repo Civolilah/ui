@@ -49,6 +49,7 @@ export default function VendorDetails() {
       value: '$vendor.custom4',
       label: customField('vendor4').label() || t('custom4'),
     },
+    { value: '$vendor.tags', label: t('tags') },
 
     { value: '$contact.full_name', label: t('contact_full_name') },
     { value: '$contact.email', label: t('contact_email') },

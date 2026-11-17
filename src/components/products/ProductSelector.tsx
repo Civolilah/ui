@@ -16,6 +16,7 @@ import { endpoint, trans } from '$app/common/helpers';
 import { useHasPermission } from '$app/common/hooks/permissions/useHasPermission';
 import { useCurrentCompany } from '$app/common/hooks/useCurrentCompany';
 import { Product } from '$app/common/interfaces/product';
+import { TagPills } from '$app/components/tags/TagPills';
 import { ProductCreate } from '$app/pages/invoices/common/components/ProductCreate';
 import { ErrorMessage } from '../ErrorMessage';
 import { ComboboxAsync, Entry } from '../forms/Combobox';
@@ -102,6 +103,8 @@ export function ProductSelector(props: Props) {
               >
                 {product.notes}
               </p>
+
+              <TagPills tags={product.tags} className="mt-1" />
             </div>
           ),
         }}

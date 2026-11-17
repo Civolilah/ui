@@ -10,6 +10,7 @@
 
 import { blankLineItem } from '$app/common/constants/blank-line-item';
 import { endpoint } from '$app/common/helpers';
+import { productLineItemTags } from '$app/common/helpers/line-item-tags';
 import { request } from '$app/common/helpers/request';
 import { Expense } from '$app/common/interfaces/expense';
 import {
@@ -17,6 +18,7 @@ import {
   InvoiceItemType,
 } from '$app/common/interfaces/invoice-item';
 import { Product } from '$app/common/interfaces/product';
+import { Tag } from '$app/common/interfaces/tag';
 import { Task } from '$app/common/interfaces/task';
 import { calculateTaskHours } from '$app/pages/projects/common/hooks/useInvoiceProject';
 
@@ -27,6 +29,7 @@ export interface WorkRow {
   title: string;
   detail?: string;
   tag?: string;
+  tags?: Tag[];
   amount: number;
   build: () => InvoiceItem;
 }
@@ -35,6 +38,7 @@ export const productFields = (product: Product): Partial<InvoiceItem> => {
   return {
     type_id: InvoiceItemType.Product,
     product_key: product.product_key,
+    tags: productLineItemTags(product),
     notes: product.notes || product.product_key,
     cost: product.price,
     quantity: product.quantity || 1,
@@ -71,6 +75,7 @@ export const loadWorkRows = (
         id: product.id,
         title: product.product_key || product.notes,
         detail: product.product_key ? product.notes : undefined,
+        tags: product.tags,
         amount: product.price,
         build: () => productToItem(product),
       }))

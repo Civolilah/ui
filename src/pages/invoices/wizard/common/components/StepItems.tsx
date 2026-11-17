@@ -27,6 +27,7 @@ import { useDispatch } from 'react-redux';
 import { Button, InputLabel } from '$app/components/forms';
 import { NumberInputField } from '$app/components/forms/NumberInputField';
 import { HiddenResourceTaxesAlert } from '$app/components/HiddenResourceTaxesAlert';
+import { LineItemTagsSelector } from '$app/components/tags/LineItemTagsSelector';
 import { ClientContactModal } from './ClientContactModal';
 import { StepFooter } from './StepFooter';
 import { StepTransition } from './StepTransition';
@@ -306,6 +307,14 @@ export function StepItems({ wizard, embedded }: Props) {
                 }
               />
 
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <LineItemTagsSelector
+                  withSelectedTags
+                  value={item.tags}
+                  onChange={(value) => update(index, { tags: value })}
+                />
+              </div>
+
               <div className="mt-3 flex items-end gap-3">
                 <div className="flex-1 min-w-0">
                   <NumberInputField
@@ -534,7 +543,10 @@ export function StepItems({ wizard, embedded }: Props) {
         onPick={(item) => {
           const blankIndex = items.findIndex(
             (existing) =>
-              !existing.notes && !existing.product_key && !existing.cost
+              !existing.notes &&
+              !existing.product_key &&
+              !existing.cost &&
+              !existing.tags
           );
 
           if (item.tax_name1 || item.tax_name2 || item.tax_name3) {

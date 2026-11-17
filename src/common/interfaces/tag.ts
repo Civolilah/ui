@@ -103,3 +103,10 @@ export interface Tag {
   created_at: number;
   updated_at: number;
 }
+
+export interface TagOption {
+  id?: string;
+  name: string;
+  color?: string | null;
+  isLegacy?: boolean;
+}

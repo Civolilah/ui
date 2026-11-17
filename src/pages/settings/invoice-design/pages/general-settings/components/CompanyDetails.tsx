@@ -49,6 +49,7 @@ export default function CompanyDetails() {
       value: '$company.custom4',
       label: customField('company4').label() || t('custom4'),
     },
+    { value: '$company.tags', label: t('tags') },
   ];
 
   return (

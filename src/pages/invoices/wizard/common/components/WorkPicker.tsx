@@ -14,6 +14,7 @@ import { InvoiceItem } from '$app/common/interfaces/invoice-item';
 import { Modal } from '$app/components/Modal';
 import { Spinner } from '$app/components/Spinner';
 import { InputField } from '$app/components/forms';
+import { TagPills } from '$app/components/tags/TagPills';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WorkRow, WorkSource, loadWorkRows } from '../helpers/work-rows';
@@ -135,6 +136,8 @@ export function WorkPicker({
                       .join(' · ')}
                   </span>
                 ) : null}
+
+                <TagPills tags={row.tags} className="mt-1" />
               </div>
 
               <span

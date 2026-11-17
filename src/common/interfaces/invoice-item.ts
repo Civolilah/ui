@@ -48,4 +48,5 @@ export interface InvoiceItem {
   expense_id?: string;
   income_account_id?: string;
   is_optional?: boolean;
+  tags?: string;
 }

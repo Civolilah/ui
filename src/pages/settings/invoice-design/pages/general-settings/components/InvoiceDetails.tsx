@@ -46,6 +46,7 @@ export default function InvoiceDetails() {
       value: '$invoice.custom4',
       label: customField('invoice4').label() || t('custom4'),
     },
+    { value: '$invoice.tags', label: t('tags') },
     { value: '$invoice.project', label: t('project') },
     { value: '$client.balance', label: t('client_balance') },
     { value: '$invoice.total', label: t('invoice_total') },

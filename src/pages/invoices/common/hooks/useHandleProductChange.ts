@@ -8,6 +8,7 @@
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
+import { productLineItemTags } from '$app/common/helpers/line-item-tags';
 import { useClientResolver } from '$app/common/hooks/clients/useClientResolver';
 import { useCurrentCompany } from '$app/common/hooks/useCurrentCompany';
 import { useResolveCurrency } from '$app/common/hooks/useResolveCurrency';
@@ -48,6 +49,8 @@ export function useHandleProductChange(props: Props) {
 
       return props.onChange(index, lineItem);
     }
+
+    lineItem.tags = productLineItemTags(product);
 
     const currentPrice =
       product?.cost > 0 && props.relationType === 'vendor_id'

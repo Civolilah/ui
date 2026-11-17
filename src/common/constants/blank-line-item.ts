@@ -43,5 +43,6 @@ export const blankLineItem = (): InvoiceItem => {
     type_id: InvoiceItemType.Product,
     tax_id: '1',
     income_account_id: '',
+    tags: '',
   };
 };
