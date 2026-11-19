@@ -28,6 +28,7 @@ import { ResourceActions } from '$app/components/ResourceActions';
 import { Spinner } from '$app/components/Spinner';
 import { ImportFromGoogleDrive } from '$app/pages/documents/builder/google-drive';
 import { useEmbeddedBuilderEvents } from '$app/pages/documents/builder/useEmbeddedBuilderEvents';
+import '$app/pages/documents/common/pdf-renderer';
 import { useActions } from '../common/hooks/useActions';
 import { EditBlueprintModal } from '../edit/components/EditBlueprintModal';
 import { SignatorySelector, SignatorySwap } from './Elements';
