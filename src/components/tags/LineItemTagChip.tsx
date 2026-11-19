@@ -31,7 +31,7 @@ export function LineItemTagChip(props: Props) {
   return (
     <span
       data-cy="lineItemTagChip"
-      className="inline-flex h-6 max-w-full items-center gap-1 rounded-full border px-2 text-xs font-medium"
+      className="inline-flex h-6 min-w-0 max-w-full items-center gap-1 rounded-full border px-2 text-xs font-medium"
       style={{
         backgroundColor: option.isLegacy
           ? 'transparent'

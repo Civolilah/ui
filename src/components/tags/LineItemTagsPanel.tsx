@@ -24,13 +24,14 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import { MdCheck } from 'react-icons/md';
 import { useColorScheme } from '$app/common/colors';
 import { endpoint, trans } from '$app/common/helpers';
 import {
   dedupeLineItemTagOptions,
+  lineItemTagNames,
   normalizeLineItemTagName,
   parseLineItemTags,
-  resolveLineItemTagOptions,
   serializeLineItemTags,
 } from '$app/common/helpers/line-item-tags';
 import { request } from '$app/common/helpers/request';
@@ -46,10 +47,10 @@ import { Tag, TAG_ENTITY_TYPES, TagOption } from '$app/common/interfaces/tag';
 import { ValidationBag } from '$app/common/interfaces/validation-bag';
 import { useTagsQuery } from '$app/common/queries/tags';
 import { Alert } from '$app/components/Alert';
+import { Icon } from '$app/components/icons/Icon';
 import { Plus } from '$app/components/icons/Plus';
 import { Spinner } from '$app/components/Spinner';
 import { isActiveTag, tagPillColor } from '$app/components/tags/TagPills';
-import { LineItemTagChip } from './LineItemTagChip';
 
 const PANEL_WIDTH = 320;
 const PANEL_GAP = 6;
@@ -98,9 +99,11 @@ export function LineItemTagsPanel(props: Props) {
   const [errors, setErrors] = useState<ValidationBag>();
   const [isCreating, setIsCreating] = useState(false);
   const [placement, setPlacement] = useState<Placement>();
+  const [initialNames] = useState(() => parseLineItemTags(props.value));
 
   const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const clearButtonRef = useRef<HTMLButtonElement>(null);
   const valueRef = useRef(props.value);
   const onChangeRef = useRef(props.onChange);
   const isOpenRef = useRef(props.isOpen);
@@ -118,22 +121,28 @@ export function LineItemTagsPanel(props: Props) {
     (data?.data ?? []).filter(isActiveTag)
   );
 
-  const selectedOptions = data
-    ? resolveLineItemTagOptions(names, options)
-    : names.map((name): TagOption => ({ name, color: null }));
+  const optionNames = options.map((option) => option.name);
+
+  const legacyOptions = lineItemTagNames([...initialNames, ...names])
+    .filter((name) => !optionNames.includes(name))
+    .map((name): TagOption => ({ name, color: null, isLegacy: true }));
 
   const searchTerm = normalizeLineItemTagName(query).toLowerCase();
   const tagName = query.trim();
 
-  const availableOptions = options.filter(
-    (option) =>
-      !names.includes(option.name) &&
-      option.name.toLowerCase().includes(searchTerm)
-  );
+  const rows = data
+    ? [
+        ...legacyOptions,
+        ...options.filter((option) => initialNames.includes(option.name)),
+        ...options.filter((option) => !initialNames.includes(option.name)),
+      ].filter((option) => option.name.toLowerCase().includes(searchTerm))
+    : [];
 
-  const hasExactMatch =
-    options.some((option) => option.name.toLowerCase() === searchTerm) ||
-    names.some((name) => name.toLowerCase() === searchTerm);
+  const hasExactMatch = [
+    ...optionNames,
+    ...names,
+    ...legacyOptions.map((option) => option.name),
+  ].some((name) => name.toLowerCase() === searchTerm);
 
   const canCreate =
     isAdmin &&
@@ -143,10 +152,9 @@ export function LineItemTagsPanel(props: Props) {
     !isLoading &&
     !isError;
 
-  const rowsCount = availableOptions.length + (canCreate ? 1 : 0);
+  const rowsCount = rows.length + (canCreate ? 1 : 0);
   const currentIndex = Math.min(activeIndex, rowsCount - 1);
-  const isCreateRowActive =
-    canCreate && currentIndex === availableOptions.length;
+  const isCreateRowActive = canCreate && currentIndex === rows.length;
 
   const reposition = useCallback(() => {
     const anchor = props.anchorRef.current?.getBoundingClientRect();
@@ -261,18 +269,31 @@ export function LineItemTagsPanel(props: Props) {
     };
   }, [props.isOpen, props.onClose, props.anchorRef, reposition]);
 
-  const addTag = (option: TagOption) => {
-    props.onChange(serializeLineItemTags([...names, option.name]));
+  const toggleTag = (option: TagOption) => {
+    const nextNames = names.includes(option.name)
+      ? names.filter((name) => name !== option.name)
+      : [...names, option.name];
 
-    setQuery('');
-    setErrors(undefined);
-  };
-
-  const removeTag = (name: string) => {
     props.onChange(
-      serializeLineItemTags(names.filter((current) => current !== name))
+      serializeLineItemTags(
+        lineItemTagNames([...initialNames, ...nextNames]).filter((name) =>
+          nextNames.includes(name)
+        )
+      )
     );
 
+    setErrors(undefined);
+    inputRef.current?.select();
+  };
+
+  const removeLastTag = () => {
+    props.onChange(serializeLineItemTags(names.slice(0, -1)));
+  };
+
+  const clearTags = () => {
+    props.onChange('');
+
+    setErrors(undefined);
     inputRef.current?.focus();
   };
 
@@ -356,8 +377,8 @@ export function LineItemTagsPanel(props: Props) {
       return;
     }
 
-    if (currentIndex >= 0 && currentIndex < availableOptions.length) {
-      addTag(availableOptions[currentIndex]);
+    if (currentIndex >= 0 && currentIndex < rows.length) {
+      toggleTag(rows[currentIndex]);
     }
   };
 
@@ -426,8 +447,16 @@ export function LineItemTagsPanel(props: Props) {
       return;
     }
 
-    if (event.key === 'Backspace' && !query && names.length) {
-      removeTag(names[names.length - 1]);
+    if (event.key === 'Backspace' && !event.repeat && !query && names.length) {
+      removeLastTag();
+
+      return;
+    }
+
+    if (event.key === 'Tab' && !event.shiftKey && names.length) {
+      event.preventDefault();
+
+      clearButtonRef.current?.focus();
 
       return;
     }
@@ -437,6 +466,20 @@ export function LineItemTagsPanel(props: Props) {
         event.preventDefault();
       }
 
+      props.onClose(true);
+    }
+  };
+
+  const handleClearKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'Tab' && event.shiftKey) {
+      event.preventDefault();
+
+      inputRef.current?.focus();
+
+      return;
+    }
+
+    if (event.key === 'Tab') {
       props.onClose(true);
     }
   };
@@ -458,6 +501,8 @@ export function LineItemTagsPanel(props: Props) {
     <div
       ref={panelRef}
       data-cy="lineItemTagsPanel"
+      role="dialog"
+      aria-label={String(t('tags'))}
       className="fixed z-50 flex flex-col overflow-hidden rounded-md border shadow-lg"
       style={{
         left: placement.left,
@@ -473,21 +518,6 @@ export function LineItemTagsPanel(props: Props) {
         event.target !== inputRef.current && event.preventDefault()
       }
     >
-      {selectedOptions.length > 0 && (
-        <div
-          className="flex shrink-0 flex-wrap gap-1 border-b p-2"
-          style={{ borderColor: colors.$24 }}
-        >
-          {selectedOptions.map((option) => (
-            <LineItemTagChip
-              key={option.name}
-              option={option}
-              onRemove={() => removeTag(option.name)}
-            />
-          ))}
-        </div>
-      )}
-
       <div className="shrink-0 p-2">
         <input
           ref={inputRef}
@@ -527,17 +557,41 @@ export function LineItemTagsPanel(props: Props) {
       </div>
 
       <div
+        className="flex shrink-0 items-center justify-between px-3 pb-2 text-xs"
+        style={{ color: colors.$22 }}
+      >
+        <span>{trans('count_selected', { count: names.length })}</span>
+
+        <button
+          ref={clearButtonRef}
+          type="button"
+          data-cy="lineItemTagsClear"
+          className={classNames('font-medium hover:underline', {
+            invisible: !names.length,
+          })}
+          style={{ color: colors.$3 }}
+          tabIndex={names.length ? 0 : -1}
+          onClick={clearTags}
+          onKeyDown={handleClearKeyDown}
+        >
+          {t('clear_all')}
+        </button>
+      </div>
+
+      <div
         id={listId}
         role="listbox"
+        aria-label={String(t('tags'))}
         aria-multiselectable="true"
-        className="min-h-0 flex-1 overflow-y-auto px-1 pb-1"
+        className="min-h-0 flex-1 overflow-y-auto border-t px-1 py-1"
+        style={{ borderColor: colors.$24 }}
       >
-        {availableOptions.map((option, index) => (
+        {rows.map((option, index) => (
           <div
             key={option.name}
             id={`${listId}-${index}`}
             role="option"
-            aria-selected={false}
+            aria-selected={names.includes(option.name)}
             data-cy="lineItemTagOption"
             className="flex cursor-pointer items-center gap-2 rounded-[0.1875rem] px-3 py-2 text-sm"
             style={{
@@ -546,20 +600,46 @@ export function LineItemTagsPanel(props: Props) {
                 index === currentIndex ? colors.$20 : 'transparent',
             }}
             onMouseMove={(event) => handleRowMouseMove(event, index)}
-            onClick={() => addTag(option)}
+            onClick={() => toggleTag(option)}
           >
             <span
+              className="flex h-4 w-4 shrink-0 items-center justify-center rounded border"
+              style={{
+                borderColor: names.includes(option.name)
+                  ? colors.$3
+                  : colors.$24,
+                backgroundColor: names.includes(option.name)
+                  ? colors.$3
+                  : 'transparent',
+              }}
+            >
+              {names.includes(option.name) && (
+                <Icon element={MdCheck} size={12} color={colors.$1} />
+              )}
+            </span>
+
+            <span
               className="h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: tagPillColor(option) }}
+              style={
+                option.isLegacy
+                  ? { border: `1px dashed ${colors.$17}` }
+                  : { backgroundColor: tagPillColor(option) }
+              }
             />
 
-            <span className="truncate">{option.name}</span>
+            <span
+              className="truncate"
+              title={option.name}
+              style={{ color: option.isLegacy ? colors.$22 : colors.$3 }}
+            >
+              {option.name}
+            </span>
           </div>
         ))}
 
         {canCreate && (
           <div
-            id={`${listId}-${availableOptions.length}`}
+            id={`${listId}-${rows.length}`}
             role="option"
             aria-selected={false}
             data-cy="lineItemCreateTagOption"
@@ -568,9 +648,7 @@ export function LineItemTagsPanel(props: Props) {
               color: colors.$3,
               backgroundColor: isCreateRowActive ? colors.$20 : 'transparent',
             }}
-            onMouseMove={(event) =>
-              handleRowMouseMove(event, availableOptions.length)
-            }
+            onMouseMove={(event) => handleRowMouseMove(event, rows.length)}
             onClick={createTag}
           >
             <Plus size="0.85rem" color={colors.$16} />

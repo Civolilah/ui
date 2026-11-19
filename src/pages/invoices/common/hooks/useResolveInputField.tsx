@@ -404,34 +404,30 @@ export function useResolveInputField(props: Props) {
 
     if (property === 'product_key') {
       return (
-        <div className="flex w-full min-w-0 items-center gap-x-1">
-          <div className="min-w-0 flex-1">
-            <ProductSelector
-              key={`${property}${resource?.line_items[index][property]}`}
-              onChange={(value) =>
-                onProductChange(index, value.label, value.resource)
-              }
-              className="w-auto"
-              defaultValue={resource?.line_items[index][property]}
-              onProductCreated={(product) =>
-                product && onProductChange(index, product.product_key, product)
-              }
-              clearButton
-              onInputValueChange={(value) =>
-                onChange('product_key', value, index)
-              }
-              onClearButtonClick={() => handleProductChange(index, '', null)}
-              displayStockQuantity={location.pathname.startsWith('/invoices')}
-            />
-          </div>
-
-          <LineItemTagsSelector
-            key={resource?.line_items[index]._id ?? index}
-            className="mt-1"
-            value={resource?.line_items[index].tags}
-            onChange={(value) => onChange('tags', value, index)}
+        <LineItemTagsSelector
+          key={resource?.line_items[index]._id ?? index}
+          layout="cell"
+          value={resource?.line_items[index].tags}
+          onChange={(value) => onChange('tags', value, index)}
+        >
+          <ProductSelector
+            key={`${property}${resource?.line_items[index][property]}`}
+            onChange={(value) =>
+              onProductChange(index, value.label, value.resource)
+            }
+            className="w-auto"
+            defaultValue={resource?.line_items[index][property]}
+            onProductCreated={(product) =>
+              product && onProductChange(index, product.product_key, product)
+            }
+            clearButton
+            onInputValueChange={(value) =>
+              onChange('product_key', value, index)
+            }
+            onClearButtonClick={() => handleProductChange(index, '', null)}
+            displayStockQuantity={location.pathname.startsWith('/invoices')}
           />
-        </div>
+        </LineItemTagsSelector>
       );
     }
 

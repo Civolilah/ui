@@ -307,9 +307,9 @@ export function StepItems({ wizard, embedded }: Props) {
                 }
               />
 
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="mt-3">
                 <LineItemTagsSelector
-                  withSelectedTags
+                  layout="row"
                   value={item.tags}
                   onChange={(value) => update(index, { tags: value })}
                 />
