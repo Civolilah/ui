@@ -23,6 +23,7 @@ import { $refetch } from '$app/common/hooks/useRefetch';
 import { Document } from '$app/common/interfaces/docuninja/api';
 import { GenericSingleResourceResponse } from '$app/common/interfaces/generic-api-response';
 import { ValidationBag } from '$app/common/interfaces/validation-bag';
+import '$app/pages/documents/common/pdf-renderer';
 import { CardContainer, Element } from '$app/components/cards';
 import { Button, InputField } from '$app/components/forms';
 
