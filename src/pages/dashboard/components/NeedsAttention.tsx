@@ -196,6 +196,7 @@ function NeedsAttentionRow(props: RowProps) {
         onClose={() => setIsContactModalOpen(false)}
         relation="client"
         relationId={invoice.client_id}
+        relationResource={invoice.client}
       />
     </div>
   );

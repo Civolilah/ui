@@ -69,6 +69,7 @@ export const SendEmailBulkAction = (props: Props) => {
         onClose={() => setContactEmailOpen(false)}
         relation="client"
         relationId={getQuoteWithoutClientContacts()?.client_id}
+        relationResource={getQuoteWithoutClientContacts()?.client}
       />
     </>
   );

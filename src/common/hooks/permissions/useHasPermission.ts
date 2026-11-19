@@ -9,6 +9,7 @@
  */
 
 import { useCurrentCompanyUser } from '../useCurrentCompanyUser';
+import { useCurrentUser } from '../useCurrentUser';
 
 type AllPermissions = 'create_all' | 'view_all' | 'edit_all';
 type ClientPermissions = 'create_client' | 'view_client' | 'edit_client';
@@ -67,20 +68,43 @@ export type Permissions =
   | EmailPermissions
   | DocumentPermissions;
 
+export interface PermissionResource {
+  user_id?: string;
+  assigned_user_id?: string;
+}
+
+const RESOURCE_PERMISSION =
+  /^(view|edit)_(client|product|invoice|payment|recurring_invoice|quote|credit|project|task|vendor|expense|recurring_expense|bank_transaction|purchase_order)$/;
+
 export function useHasPermission() {
   const user = useCurrentCompanyUser();
+  const currentUser = useCurrentUser();
 
-  return (permission: Permissions) => {
+  return (permission: Permissions, resource?: PermissionResource | null) => {
     const permissions = user?.permissions ?? '';
     const [action] = permission.split('_');
 
-    return Boolean(
+    const hasPermissionFlag = Boolean(
       user?.is_admin ||
         user?.is_owner ||
         permissions.includes(permission) ||
         (permissions.includes(`${action}_all`) &&
           permission !== 'view_reports' &&
           permission !== 'view_dashboard')
+    );
+
+    if (
+      hasPermissionFlag ||
+      !resource ||
+      !currentUser?.id ||
+      !RESOURCE_PERMISSION.test(permission)
+    ) {
+      return hasPermissionFlag;
+    }
+
+    return (
+      resource.user_id === currentUser.id ||
+      resource.assigned_user_id === currentUser.id
     );
   };
 }

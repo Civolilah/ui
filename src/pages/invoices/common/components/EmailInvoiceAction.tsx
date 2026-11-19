@@ -54,6 +54,7 @@ export function EmailInvoiceAction(props: Props) {
         onClose={() => setIsModalOpen(false)}
         relation="client"
         relationId={invoice.client_id}
+        relationResource={invoice.client}
       />
     </>
   );
