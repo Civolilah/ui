@@ -99,6 +99,7 @@ export const SendEmailBulkAction = (props: Props) => {
         onClose={() => setContactEmailOpen(false)}
         relation="client"
         relationId={getCreditWithoutClientContacts()?.client_id}
+        relationResource={getCreditWithoutClientContacts()?.client}
       />
     </>
   );

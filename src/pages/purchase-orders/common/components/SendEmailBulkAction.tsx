@@ -90,6 +90,7 @@ export const SendEmailBulkAction = (props: Props) => {
         onClose={() => setContactEmailOpen(false)}
         relation="vendor"
         relationId={getPurchaseOrderWithoutVendorContacts()?.vendor_id}
+        relationResource={getPurchaseOrderWithoutVendorContacts()?.vendor}
       />
     </>
   );

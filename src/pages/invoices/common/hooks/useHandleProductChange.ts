@@ -57,7 +57,9 @@ export function useHandleProductChange(props: Props) {
         ? product?.cost
         : product?.price || 0;
 
-    if (company.fill_products) {
+    // Additive only: only empty fields are filled, so data already on the line
+    // (task hours, rate, manual entries) survives selecting a service.
+    if (company.fill_products && !lineItem.quantity) {
       if (!company?.enable_product_quantity) {
         lineItem.quantity = 1;
       } else {
@@ -65,7 +67,9 @@ export function useHandleProductChange(props: Props) {
           ? 1
           : (product?.quantity ?? 1);
       }
+    }
 
+    if (company.fill_products && !lineItem.cost) {
       if (resource.client_id) {
         // Use client from resource if available to avoid permission issues
         const clientPromise =
@@ -105,36 +109,41 @@ export function useHandleProductChange(props: Props) {
       }
     }
 
-    if (!product) {
-      lineItem.notes = '';
-    }
+    const fillNotes = props.type !== 'product' || company.fill_products;
 
-    if (props.type == 'product' && product?.notes && company.fill_products) {
-      lineItem.notes = product?.notes;
-    }
-
-    if (props.type == 'task' && product?.notes && !lineItem.notes) {
+    if (fillNotes && product?.notes && !lineItem.notes) {
       lineItem.notes = product.notes;
     }
 
-    lineItem.tax_name1 = product?.tax_name1 || '';
-    lineItem.tax_name2 = product?.tax_name2 || '';
-    lineItem.tax_name3 = product?.tax_name3 || '';
+    if (!lineItem.tax_name1 && !lineItem.tax_rate1) {
+      lineItem.tax_name1 = product?.tax_name1 || '';
+      lineItem.tax_rate1 = product?.tax_rate1 || 0;
+    }
 
-    lineItem.tax_rate1 = product?.tax_rate1 || 0;
-    lineItem.tax_rate2 = product?.tax_rate2 || 0;
-    lineItem.tax_rate3 = product?.tax_rate3 || 0;
+    if (!lineItem.tax_name2 && !lineItem.tax_rate2) {
+      lineItem.tax_name2 = product?.tax_name2 || '';
+      lineItem.tax_rate2 = product?.tax_rate2 || 0;
+    }
 
-    lineItem.custom_value1 = product?.custom_value1 || '';
-    lineItem.custom_value2 = product?.custom_value2 || '';
-    lineItem.custom_value3 = product?.custom_value3 || '';
-    lineItem.custom_value4 = product?.custom_value4 || '';
-    lineItem.tax_id = product?.tax_id || '1';
+    if (!lineItem.tax_name3 && !lineItem.tax_rate3) {
+      lineItem.tax_name3 = product?.tax_name3 || '';
+      lineItem.tax_rate3 = product?.tax_rate3 || 0;
+    }
 
-    lineItem.product_cost = product?.cost;
+    lineItem.custom_value1 ||= product?.custom_value1 || '';
+    lineItem.custom_value2 ||= product?.custom_value2 || '';
+    lineItem.custom_value3 ||= product?.custom_value3 || '';
+    lineItem.custom_value4 ||= product?.custom_value4 || '';
+
+    // '1' is the default tax category, so it counts as not populated.
+    if (!lineItem.tax_id || lineItem.tax_id === '1') {
+      lineItem.tax_id = product?.tax_id || '1';
+    }
+
+    lineItem.product_cost ||= product?.cost;
 
     if (import.meta.env.VITE_DISABLE_QUICKBOOKS_INTEGRATION !== 'true') {
-      lineItem.income_account_id = product?.income_account_id || '';
+      lineItem.income_account_id ||= product?.income_account_id || '';
     }
 
     return props.onChange(index, lineItem);

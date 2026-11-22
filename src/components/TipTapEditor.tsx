@@ -1095,6 +1095,7 @@ export function TipTapEditor({
   const [backgroundColor, setBackgroundColor] = useState<string>('#FFFF00');
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: {
@@ -1306,14 +1307,14 @@ export function TipTapEditor({
 
   if (!editor) return null;
 
-  function getFormatLabel(): string {
+  const getFormatLabel = (): string => {
     if (editor.isActive('heading', { level: 1 })) return 'Heading 1';
     if (editor.isActive('heading', { level: 2 })) return 'Heading 2';
     if (editor.isActive('heading', { level: 3 })) return 'Heading 3';
     if (editor.isActive('heading', { level: 4 })) return 'Heading 4';
     if (editor.isActive('codeBlock')) return 'Preformatted';
     return 'Paragraph';
-  }
+  };
 
   const theme: ThemeProps = {
     backgroundColor: colors.$1,

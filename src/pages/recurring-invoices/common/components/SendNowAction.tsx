@@ -65,6 +65,7 @@ export function SendNowAction({ recurringInvoice, children }: Props) {
         onClose={() => setIsContactEmailOpen(false)}
         relation="client"
         relationId={recurringInvoice?.client_id}
+        relationResource={recurringInvoice?.client}
       />
     </>
   );

@@ -51,6 +51,7 @@ export function EmailCreditAction({ credit, isDropdown = false }: Props) {
         onClose={() => setIsModalOpen(false)}
         relation="client"
         relationId={credit.client_id}
+        relationResource={credit.client}
       />
     </>
   );
