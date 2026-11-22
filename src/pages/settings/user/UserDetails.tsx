@@ -9,7 +9,7 @@
  */
 
 import axios, { AxiosError } from 'axios';
-import { useAtom, useAtomValue } from 'jotai';
+import { getDefaultStore, useAtom, useAtomValue } from 'jotai';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -24,6 +24,7 @@ import { useInjectCompanyChanges } from '$app/common/hooks/useInjectCompanyChang
 import { useOnWrongPasswordEnter } from '$app/common/hooks/useOnWrongPasswordEnter';
 import {
   reactSettingsAtom,
+  userDetailsDraftAtom,
   useUserDetailsDraft,
 } from '$app/common/hooks/useReactSettings';
 import { $refetch } from '$app/common/hooks/useRefetch';
@@ -180,6 +181,10 @@ export function UserDetails() {
         }
       })
       .catch((error: AxiosError<ValidationBag>) => {
+        if (getDefaultStore().get(userDetailsDraftAtom) === null) {
+          userDetailsDraft.begin();
+        }
+
         if (error.response?.status === 412) {
           onWrongPasswordEnter(passwordIsRequired);
           setPasswordConfirmModalOpen(true);

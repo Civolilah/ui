@@ -72,7 +72,6 @@ export function Create() {
           report_settings: [],
           number_years_active: 1,
           include_deleted_clients: false,
-          accent_color: '#2F7DC3',
         },
         is_owner: false,
         is_admin: false,

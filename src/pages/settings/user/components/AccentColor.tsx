@@ -9,33 +9,25 @@
  */
 
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
 import colors from '$app/common/constants/colors';
-import { updateChanges } from '$app/common/stores/slices/user';
+import {
+  useDraftOrCommittedReactSettings,
+  useUpdateDraftOrReactSettings,
+} from '$app/common/hooks/useReactSettings';
 import { ColorPicker } from '$app/components/forms/ColorPicker';
-import { RootState } from '../../../../common/stores/store';
 import { Element } from '../../../../components/cards';
 
 export function AccentColor() {
   const [t] = useTranslation();
-  const dispatch = useDispatch();
 
-  const userChanges = useSelector((state: RootState) => state.user.changes);
+  const reactSettings = useDraftOrCommittedReactSettings();
+  const updateSettings = useUpdateDraftOrReactSettings();
 
   return (
     <Element leftSide={t('accent_color')}>
       <ColorPicker
-        value={
-          userChanges?.company_user?.settings?.accent_color || colors.primary
-        }
-        onValueChange={(color) =>
-          dispatch(
-            updateChanges({
-              property: 'company_user.settings.accent_color',
-              value: color,
-            })
-          )
-        }
+        value={reactSettings.accent_color || colors.primary}
+        onValueChange={(color) => updateSettings('accent_color', color)}
       />
     </Element>
   );

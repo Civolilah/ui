@@ -70,7 +70,6 @@ export interface CompanyUser {
 }
 
 export interface Settings {
-  accent_color: string;
   table_columns?: Record<ReactTableColumns, string[]>;
   react_table_columns?: Record<ReactTableColumns, string[]>;
 }
