@@ -11,7 +11,11 @@
 import classNames from 'classnames';
 import { merge } from 'lodash';
 import React, { CSSProperties, isValidElement, ReactNode } from 'react';
-import Select, { StylesConfig } from 'react-select';
+import Select, {
+  FilterOptionOption,
+  FormatOptionLabelMeta,
+  StylesConfig,
+} from 'react-select';
 import { useColorScheme } from '$app/common/colors';
 import CommonProps from '../../common/interfaces/common-props.interface';
 import { SelectOption } from '../datatables/Actions';
@@ -41,6 +45,14 @@ export interface SelectProps extends CommonProps {
   controlClassName?: string;
   placeholder?: string | null;
   readOnly?: boolean;
+  filterOption?: (
+    option: FilterOptionOption<SelectOption>,
+    inputValue: string
+  ) => boolean;
+  formatOptionLabel?: (
+    option: SelectOption,
+    meta: FormatOptionLabelMeta<SelectOption>
+  ) => ReactNode;
 }
 
 export function SelectField(props: SelectProps) {
@@ -67,6 +79,8 @@ export function SelectField(props: SelectProps) {
     withoutControlPadding = false,
     controlClassName,
     readOnly,
+    filterOption,
+    formatOptionLabel,
   } = props;
 
   const blankEntry: ReactNode = (
@@ -206,6 +220,8 @@ export function SelectField(props: SelectProps) {
           )}
           blurInputOnSelect
           data-cy={cypressRef}
+          {...(filterOption && { filterOption })}
+          {...(formatOptionLabel && { formatOptionLabel })}
           components={{
             ...((controlIcon || props.menuPosition !== 'fixed') && {
               Control: ({ children: controlChildren, ...rest }) => (

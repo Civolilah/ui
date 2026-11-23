@@ -368,6 +368,7 @@ export interface Settings {
   skip_automatic_email_with_peppol: boolean;
   global_tag_inheritance: boolean;
   documents_public_by_default: boolean;
+  hidden_payment_types: string;
 }
 
 export interface TaxData {

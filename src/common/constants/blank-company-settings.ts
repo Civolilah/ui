@@ -188,4 +188,5 @@ export const defaultSettings = {
   france_reporting_enabled: true,
   france_reporting_schedule: 'ten_day',
   documents_public_by_default: true,
+  hidden_payment_types: '',
 };

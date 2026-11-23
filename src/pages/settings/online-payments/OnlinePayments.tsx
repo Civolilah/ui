@@ -30,6 +30,7 @@ import { NumberInputField } from '$app/components/forms/NumberInputField';
 import Toggle from '$app/components/forms/Toggle';
 import { Settings } from '$app/components/layouts/Settings';
 import { PropertyCheckbox } from '$app/components/PropertyCheckbox';
+import { useHiddenPaymentTypeProps } from '$app/components/payment-types/useHiddenPaymentTypeProps';
 import { SettingsLabel } from '$app/components/SettingsLabel';
 import { Link, SelectField } from '../../../components/forms';
 import { companySettingsErrorsAtom } from '../common/atoms';
@@ -40,6 +41,7 @@ import {
 } from '../common/hooks/useHandleCompanySave';
 import { useHandleCurrentCompanyChangeProperty } from '../common/hooks/useHandleCurrentCompanyChange';
 import { Gateways } from '../gateways/index/Gateways';
+import { PaymentTypes } from './components/PaymentTypes';
 
 export function OnlinePayments() {
   useTitle('online_payments');
@@ -55,6 +57,20 @@ export function OnlinePayments() {
   const { data: termsResponse } = usePaymentTermsQuery({});
   const { isCompanySettingsActive } = useCurrentSettingsLevel();
   const isFormBusy = useAtomValue(isCompanySettingsFormBusy);
+
+  const hiddenPaymentTypes = isCompanySettingsActive
+    ? company?.settings?.hidden_payment_types
+    : undefined;
+
+  const defaultPaymentTypeProps = useHiddenPaymentTypeProps(
+    company?.settings?.payment_type_id,
+    hiddenPaymentTypes
+  );
+
+  const expensePaymentTypeProps = useHiddenPaymentTypeProps(
+    company?.settings?.default_expense_payment_type_id,
+    hiddenPaymentTypes
+  );
 
   const pages = [
     { name: t('settings'), href: '/settings' },
@@ -343,6 +359,7 @@ export function OnlinePayments() {
             withBlank
             errorMessage={errors?.errors['settings.payment_type_id']}
             customSelector
+            {...defaultPaymentTypeProps}
           >
             {statics?.payment_types.map(
               (type: { id: string; name: string }) => (
@@ -418,6 +435,7 @@ export function OnlinePayments() {
               errors?.errors['settings.default_expense_payment_type_id']
             }
             customSelector
+            {...expensePaymentTypeProps}
           >
             {statics?.payment_types.map(
               (type: { id: string; name: string }) => (
@@ -726,6 +744,8 @@ export function OnlinePayments() {
           />
         </Element>
       </Card>
+
+      {isCompanySettingsActive && <PaymentTypes />}
     </Settings>
   );
 }

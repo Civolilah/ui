@@ -12,9 +12,12 @@ import { PaymentType } from '$app/common/interfaces/statics';
 import { useStaticsQuery } from '$app/common/queries/statics';
 import { GenericSelectorProps } from '$app/components/CountrySelector';
 import { SelectField } from '$app/components/forms';
+import { useHiddenPaymentTypeProps } from '$app/components/payment-types/useHiddenPaymentTypeProps';
 
 export function PaymentTypeSelector(props: GenericSelectorProps) {
   const statics = useStaticsQuery();
+
+  const hiddenPaymentTypeProps = useHiddenPaymentTypeProps(props.value);
 
   return (
     <SelectField
@@ -23,6 +26,7 @@ export function PaymentTypeSelector(props: GenericSelectorProps) {
       withBlank
       errorMessage={props.errorMessage}
       customSelector
+      {...hiddenPaymentTypeProps}
     >
       {statics.data?.payment_types
         .sort((a: PaymentType, b: PaymentType) => a.name.localeCompare(b.name))
