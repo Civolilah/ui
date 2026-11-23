@@ -498,6 +498,10 @@ export function TemplatesAndReminders() {
           <TemplateSelector
             value={templateId}
             onChange={(value) => {
+              if (value === templateId) {
+                return;
+              }
+
               setTemplateId(value);
 
               if (!isCompanySettingsActive) {
