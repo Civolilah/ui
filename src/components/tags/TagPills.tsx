@@ -10,7 +10,7 @@
 
 import classNames from 'classnames';
 import { useColorScheme } from '$app/common/colors';
-import { Tag } from '$app/common/interfaces/tag';
+import { Tag, TagOption } from '$app/common/interfaces/tag';
 
 interface Props {
   tags?: Tag[];
@@ -21,11 +21,11 @@ export function isActiveTag(tag: Tag) {
   return !tag.is_deleted && !tag.archived_at;
 }
 
-export function tagPillColor(tag: { color?: string | null }) {
+export function tagPillColor(tag: Tag | TagOption) {
   return tag.color || '#64748b';
 }
 
-export function tagPillBackgroundColor(tag: { color?: string | null }) {
+export function tagPillBackgroundColor(tag: Tag | TagOption) {
   const color = tagPillColor(tag);
 
   if (/^#[0-9a-fA-F]{3}$/.test(color)) {

@@ -11,27 +11,26 @@
 import { Product } from '$app/common/interfaces/product';
 import {
   resolveTagEntityType,
-  Tag,
   TAG_ENTITY_TYPES,
+  Tag,
   TagOption,
 } from '$app/common/interfaces/tag';
+
+interface TagOptionEntry {
+  option: TagOption;
+  isProductTag: boolean;
+}
 
 export const normalizeLineItemTagName = (name: string) => {
   return name.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
 };
 
-export const lineItemTagNames = (names: string[]) => {
-  const uniqueNames: string[] = [];
+export const uniqueLineItemTagNames = (names: string[]) => {
+  const normalizedNames = names
+    .map((name) => normalizeLineItemTagName(name))
+    .filter(Boolean);
 
-  names.forEach((name) => {
-    const normalizedName = normalizeLineItemTagName(name);
-
-    if (normalizedName && !uniqueNames.includes(normalizedName)) {
-      uniqueNames.push(normalizedName);
-    }
-  });
-
-  return uniqueNames;
+  return Array.from(new Set(normalizedNames));
 };
 
 export const parseLineItemTags = (tags: string | undefined | null) => {
@@ -39,11 +38,11 @@ export const parseLineItemTags = (tags: string | undefined | null) => {
     return [];
   }
 
-  return lineItemTagNames(tags.split(','));
+  return uniqueLineItemTagNames(tags.split(','));
 };
 
 export const serializeLineItemTags = (names: string[]) => {
-  return lineItemTagNames(names).join(',');
+  return uniqueLineItemTagNames(names).join(',');
 };
 
 export const productLineItemTags = (product: Product) => {
@@ -51,10 +50,7 @@ export const productLineItemTags = (product: Product) => {
 };
 
 export const dedupeLineItemTagOptions = (tags: Tag[]) => {
-  const options = new Map<
-    string,
-    { option: TagOption; isProductTag: boolean }
-  >();
+  const options = new Map<string, TagOptionEntry>();
 
   tags.forEach((tag) => {
     const name = normalizeLineItemTagName(tag.name);
@@ -68,15 +64,18 @@ export const dedupeLineItemTagOptions = (tags: Tag[]) => {
 
     const existing = options.get(name);
 
-    if (!existing || (!existing.isProductTag && isProductTag)) {
-      options.set(name, {
-        option: { id: tag.id, name, color: tag.color },
-        isProductTag,
-      });
+    if (existing?.isProductTag) {
+      return;
     }
+
+    if (existing && !isProductTag) {
+      return;
+    }
+
+    options.set(name, { option: { name, color: tag.color }, isProductTag });
   });
 
-  return [...options.values()].map(({ option }) => option);
+  return Array.from(options.values()).map(({ option }) => option);
 };
 
 export const resolveLineItemTagOptions = (

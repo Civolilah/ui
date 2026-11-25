@@ -61,6 +61,10 @@ export function ProductsTable(props: Props) {
 
   const { resource, items, columns, relationType } = props;
 
+  const tagsColumn = props.type === 'task' ? '$task.tags' : '$product.tags';
+  const withTags = columns.includes(tagsColumn);
+  const tableColumns = columns.filter((column) => column !== tagsColumn);
+
   const setIsDeleteActionTriggered = useSetAtom(isDeleteActionTriggeredAtom);
 
   const resolveTranslation = useResolveTranslation({ type: props.type });
@@ -73,6 +77,7 @@ export function ProductsTable(props: Props) {
     relationType,
     createItem: props.onCreateItemClick,
     deleteLineItem: props.onDeleteRowClick,
+    withTags,
   });
 
   const onDragEnd = useHandleSortingRows({
@@ -106,7 +111,7 @@ export function ProductsTable(props: Props) {
   return (
     <Table>
       <Thead backgroundColor={themeColors.$5}>
-        {columns.map((column, index) => (
+        {tableColumns.map((column, index) => (
           <Th key={index} textColor={themeColors.$6}>
             {resolveTranslation(column)}
           </Th>
@@ -130,7 +135,7 @@ export function ProductsTable(props: Props) {
                       tabIndex={index + 1}
                       {...provided.draggableProps}
                     >
-                      {columns.map((column, columnIndex, { length }) => (
+                      {tableColumns.map((column, columnIndex, { length }) => (
                         <Td
                           width={resolveColumnWidth(column)}
                           key={columnIndex}

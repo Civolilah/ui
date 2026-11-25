@@ -29,7 +29,7 @@ export interface WorkRow {
   title: string;
   detail?: string;
   tag?: string;
-  tags?: Tag[];
+  productTags?: Tag[];
   amount: number;
   build: () => InvoiceItem;
 }
@@ -75,7 +75,7 @@ export const loadWorkRows = (
         id: product.id,
         title: product.product_key || product.notes,
         detail: product.product_key ? product.notes : undefined,
-        tags: product.tags,
+        productTags: product.tags,
         amount: product.price,
         build: () => productToItem(product),
       }))

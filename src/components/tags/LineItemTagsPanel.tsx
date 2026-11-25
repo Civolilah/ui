@@ -15,24 +15,21 @@ import {
   ChangeEvent,
   KeyboardEvent,
   RefObject,
-  useCallback,
   useEffect,
   useId,
-  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { MdCheck } from 'react-icons/md';
 import { useColorScheme } from '$app/common/colors';
 import { endpoint, trans } from '$app/common/helpers';
 import {
   dedupeLineItemTagOptions,
-  lineItemTagNames,
   normalizeLineItemTagName,
   parseLineItemTags,
   serializeLineItemTags,
+  uniqueLineItemTagNames,
 } from '$app/common/helpers/line-item-tags';
 import { request } from '$app/common/helpers/request';
 import { randomTagColor } from '$app/common/helpers/tags';
@@ -43,48 +40,28 @@ import { $refetch } from '$app/common/hooks/useRefetch';
 import { useValidateTagName } from '$app/common/hooks/useValidateTagName';
 import { GenericSingleResourceResponse } from '$app/common/interfaces/generic-api-response';
 import { GenericManyResponse } from '$app/common/interfaces/generic-many-response';
-import { Tag, TAG_ENTITY_TYPES, TagOption } from '$app/common/interfaces/tag';
+import { TAG_ENTITY_TYPES, Tag, TagOption } from '$app/common/interfaces/tag';
 import { ValidationBag } from '$app/common/interfaces/validation-bag';
 import { useTagsQuery } from '$app/common/queries/tags';
 import { Alert } from '$app/components/Alert';
-import { Icon } from '$app/components/icons/Icon';
-import { Plus } from '$app/components/icons/Plus';
 import { Spinner } from '$app/components/Spinner';
-import { isActiveTag, tagPillColor } from '$app/components/tags/TagPills';
-
-const PANEL_WIDTH = 320;
-const PANEL_GAP = 6;
-const VIEWPORT_MARGIN = 16;
-const TAG_NAME_MAX_LENGTH = 191;
-
-interface Placement {
-  left: number;
-  top?: number;
-  bottom?: number;
-  width: number;
-  maxHeight: number;
-}
+import { LineItemCreateTagOption } from './LineItemCreateTagOption';
+import { LineItemTagOption } from './LineItemTagOption';
+import { isActiveTag } from './TagPills';
+import { useLineItemTagsPlacement } from './useLineItemTagsPlacement';
 
 interface Props {
   isOpen: boolean;
-  anchorRef: RefObject<HTMLButtonElement>;
+  anchorRef: RefObject<HTMLDivElement>;
+  triggerRef: RefObject<HTMLButtonElement>;
   value?: string;
   onChange: (value: string) => void;
   onClose: (restoreFocus: boolean) => void;
 }
 
-const isSamePlacement = (current: Placement | undefined, next: Placement) => {
-  return (
-    current?.left === next.left &&
-    current?.top === next.top &&
-    current?.bottom === next.bottom &&
-    current?.width === next.width &&
-    current?.maxHeight === next.maxHeight
-  );
-};
-
 export function LineItemTagsPanel(props: Props) {
   const [t] = useTranslation();
+
   const colors = useColorScheme();
   const listId = useId();
 
@@ -94,28 +71,33 @@ export function LineItemTagsPanel(props: Props) {
   const { isAdmin } = useAdmin();
   const validateTagName = useValidateTagName();
 
-  const [query, setQuery] = useState('');
-  const [activeIndex, setActiveIndex] = useState(0);
+  const { isOpen, anchorRef, triggerRef, value, onChange, onClose } = props;
+
+  const [query, setQuery] = useState<string>('');
+  const [activeIndex, setActiveIndex] = useState<number>(0);
   const [errors, setErrors] = useState<ValidationBag>();
-  const [isCreating, setIsCreating] = useState(false);
-  const [placement, setPlacement] = useState<Placement>();
-  const [initialNames] = useState(() => parseLineItemTags(props.value));
+  const [isCreating, setIsCreating] = useState<boolean>(false);
+  const [initialNames] = useState<string[]>(() => parseLineItemTags(value));
 
   const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const clearButtonRef = useRef<HTMLButtonElement>(null);
-  const valueRef = useRef(props.value);
-  const onChangeRef = useRef(props.onChange);
-  const isOpenRef = useRef(props.isOpen);
-  const isMountedRef = useRef(false);
-  const pointerRef = useRef({ x: 0, y: 0 });
+  const valueRef = useRef<string | undefined>(value);
+  const onChangeRef = useRef<(value: string) => void>(onChange);
+  const isOpenRef = useRef<boolean>(isOpen);
+  const isMountedRef = useRef<boolean>(false);
+  const pointerRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  const placement = useLineItemTagsPlacement({ anchorRef, isOpen, value });
 
   const { data, isLoading, isError, refetch } = useTagsQuery({
     entityType: TAG_ENTITY_TYPES.product,
-    enabled: props.isOpen,
+    enabled: isOpen,
   });
 
-  const names = parseLineItemTags(props.value);
+  const selectedNames = parseLineItemTags(value);
+  const hasTags = selectedNames.length > 0;
+  const canRemoveLastTag = hasTags && !query;
 
   const options = dedupeLineItemTagOptions(
     (data?.data ?? []).filter(isActiveTag)
@@ -123,79 +105,58 @@ export function LineItemTagsPanel(props: Props) {
 
   const optionNames = options.map((option) => option.name);
 
-  const legacyOptions = lineItemTagNames([...initialNames, ...names])
+  const legacyOptions = uniqueLineItemTagNames([
+    ...initialNames,
+    ...selectedNames,
+  ])
     .filter((name) => !optionNames.includes(name))
     .map((name): TagOption => ({ name, color: null, isLegacy: true }));
 
   const searchTerm = normalizeLineItemTagName(query).toLowerCase();
   const tagName = query.trim();
 
-  const rows = data
-    ? [
-        ...legacyOptions,
-        ...options.filter((option) => initialNames.includes(option.name)),
-        ...options.filter((option) => !initialNames.includes(option.name)),
-      ].filter((option) => option.name.toLowerCase().includes(searchTerm))
-    : [];
+  const orderedOptions = [
+    ...legacyOptions,
+    ...options.filter((option) => initialNames.includes(option.name)),
+    ...options.filter((option) => !initialNames.includes(option.name)),
+  ];
+
+  const matchingOptions = orderedOptions.filter((option) =>
+    option.name.toLowerCase().includes(searchTerm)
+  );
+
+  const visibleOptions = data ? matchingOptions : [];
 
   const hasExactMatch = [
     ...optionNames,
-    ...names,
-    ...legacyOptions.map((option) => option.name),
+    ...initialNames,
+    ...selectedNames,
   ].some((name) => name.toLowerCase() === searchTerm);
 
-  const canCreate =
-    isAdmin &&
-    Boolean(tagName) &&
-    !hasExactMatch &&
-    !isCreating &&
-    !isLoading &&
-    !isError;
+  const isNewTagName = Boolean(tagName) && !hasExactMatch;
+  const isTagListReady = !isLoading && !isError;
+  const canCreate = isAdmin && isNewTagName && isTagListReady && !isCreating;
 
-  const rowsCount = rows.length + (canCreate ? 1 : 0);
+  const rowsCount = canCreate
+    ? visibleOptions.length + 1
+    : visibleOptions.length;
+
+  const hasRows = rowsCount > 0;
   const currentIndex = Math.min(activeIndex, rowsCount - 1);
-  const isCreateRowActive = canCreate && currentIndex === rows.length;
+  const isCreateRowActive = canCreate && currentIndex === visibleOptions.length;
 
-  const reposition = useCallback(() => {
-    const anchor = props.anchorRef.current?.getBoundingClientRect();
+  const isBusy = isLoading || isCreating;
+  const showLoadError = isError && !isLoading;
+  const showEmpty = !hasRows && !isBusy && !isError;
 
-    if (!anchor) {
-      return;
-    }
+  const errorMessage = errors?.errors?.name ?? errors?.message;
+  const isPlaced = Boolean(placement);
 
-    const width = Math.min(
-      PANEL_WIDTH,
-      window.innerWidth - VIEWPORT_MARGIN * 2
-    );
+  const optionId = (index: number) => {
+    return `${listId}-${index}`;
+  };
 
-    const left = Math.min(
-      Math.max(anchor.left, VIEWPORT_MARGIN),
-      window.innerWidth - width - VIEWPORT_MARGIN
-    );
-
-    const spaceBelow =
-      window.innerHeight - anchor.bottom - PANEL_GAP - VIEWPORT_MARGIN;
-    const spaceAbove = anchor.top - PANEL_GAP - VIEWPORT_MARGIN;
-
-    const next: Placement =
-      spaceBelow >= spaceAbove
-        ? {
-            left,
-            width,
-            top: anchor.bottom + PANEL_GAP,
-            maxHeight: spaceBelow,
-          }
-        : {
-            left,
-            width,
-            bottom: window.innerHeight - anchor.top + PANEL_GAP,
-            maxHeight: spaceAbove,
-          };
-
-    setPlacement((current) =>
-      isSamePlacement(current, next) ? current : next
-    );
-  }, [props.anchorRef]);
+  const activeOptionId = hasRows ? optionId(currentIndex) : undefined;
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -206,92 +167,80 @@ export function LineItemTagsPanel(props: Props) {
   }, []);
 
   useEffect(() => {
-    valueRef.current = props.value;
-    onChangeRef.current = props.onChange;
-    isOpenRef.current = props.isOpen;
-  }, [props.value, props.onChange, props.isOpen]);
-
-  useLayoutEffect(() => {
-    if (props.isOpen) {
-      reposition();
-    }
-  }, [props.isOpen, props.value, reposition]);
-
-  const isPlaced = Boolean(placement);
+    valueRef.current = value;
+    onChangeRef.current = onChange;
+    isOpenRef.current = isOpen;
+  }, [value, onChange, isOpen]);
 
   useEffect(() => {
-    if (props.isOpen && isPlaced) {
+    if (isOpen && isPlaced) {
       inputRef.current?.focus();
     }
-  }, [props.isOpen, isPlaced]);
+  }, [isOpen, isPlaced]);
 
   useEffect(() => {
-    if (!props.isOpen) {
+    if (!isOpen) {
       return;
     }
 
-    const handlePointerDown = (event: MouseEvent) => {
+    const isInsidePanelOrTrigger = (event: Event) => {
       const target = event.target as Node;
 
-      if (
+      return (
         panelRef.current?.contains(target) ||
-        props.anchorRef.current?.contains(target)
-      ) {
+        triggerRef.current?.contains(target)
+      );
+    };
+
+    const handleDocumentMouseDown = (event: MouseEvent) => {
+      if (isInsidePanelOrTrigger(event)) {
         return;
       }
 
-      props.onClose(false);
+      onClose(false);
     };
 
-    const handleFocusIn = (event: FocusEvent) => {
-      const target = event.target as Node;
-
-      if (
-        panelRef.current?.contains(target) ||
-        props.anchorRef.current?.contains(target)
-      ) {
+    const handleDocumentFocusIn = (event: FocusEvent) => {
+      if (isInsidePanelOrTrigger(event)) {
         return;
       }
 
       inputRef.current?.focus();
     };
 
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('focusin', handleFocusIn);
-    window.addEventListener('scroll', reposition, true);
-    window.addEventListener('resize', reposition);
+    document.addEventListener('mousedown', handleDocumentMouseDown);
+    document.addEventListener('focusin', handleDocumentFocusIn);
 
     return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('focusin', handleFocusIn);
-      window.removeEventListener('scroll', reposition, true);
-      window.removeEventListener('resize', reposition);
+      document.removeEventListener('mousedown', handleDocumentMouseDown);
+      document.removeEventListener('focusin', handleDocumentFocusIn);
     };
-  }, [props.isOpen, props.onClose, props.anchorRef, reposition]);
+  }, [isOpen, onClose, triggerRef]);
 
   const toggleTag = (option: TagOption) => {
-    const nextNames = names.includes(option.name)
-      ? names.filter((name) => name !== option.name)
-      : [...names, option.name];
+    const isSelected = selectedNames.includes(option.name);
 
-    props.onChange(
-      serializeLineItemTags(
-        lineItemTagNames([...initialNames, ...nextNames]).filter((name) =>
-          nextNames.includes(name)
-        )
-      )
-    );
+    const nextNames = isSelected
+      ? selectedNames.filter((name) => name !== option.name)
+      : [...selectedNames, option.name];
+
+    const orderedNames = uniqueLineItemTagNames([
+      ...initialNames,
+      ...nextNames,
+    ]).filter((name) => nextNames.includes(name));
+
+    onChange(serializeLineItemTags(orderedNames));
 
     setErrors(undefined);
     inputRef.current?.select();
   };
 
   const removeLastTag = () => {
-    props.onChange(serializeLineItemTags(names.slice(0, -1)));
+    onChange(serializeLineItemTags(selectedNames.slice(0, -1)));
   };
 
   const clearTags = () => {
-    props.onChange('');
+    onChange('');
 
     setErrors(undefined);
     inputRef.current?.focus();
@@ -302,20 +251,10 @@ export function LineItemTagsPanel(props: Props) {
       return;
     }
 
-    const commaErrors = validateTagName(tagName);
+    const validationErrors = validateTagName(tagName);
 
-    if (commaErrors) {
-      setErrors(commaErrors);
-
-      return;
-    }
-
-    if ([...tagName].length > TAG_NAME_MAX_LENGTH) {
-      const message = trans('maximum_length_is', {
-        maxLength: TAG_NAME_MAX_LENGTH,
-      });
-
-      setErrors({ message, errors: { name: [message] } });
+    if (validationErrors) {
+      setErrors(validationErrors);
 
       return;
     }
@@ -337,11 +276,13 @@ export function LineItemTagsPanel(props: Props) {
 
         queryClient.setQueryData<GenericManyResponse<Tag>>(
           ['/api/v1/tags', TAG_ENTITY_TYPES.product],
-          (current) =>
-            current && {
-              ...current,
-              data: [...current.data, createdTag],
+          (current) => {
+            if (!current) {
+              return current;
             }
+
+            return { ...current, data: [...current.data, createdTag] };
+          }
         );
 
         $refetch(['tags']);
@@ -377,9 +318,19 @@ export function LineItemTagsPanel(props: Props) {
       return;
     }
 
-    if (currentIndex >= 0 && currentIndex < rows.length) {
-      toggleTag(rows[currentIndex]);
+    const activeOption = visibleOptions[currentIndex];
+
+    if (activeOption) {
+      toggleTag(activeOption);
     }
+  };
+
+  const moveActiveRow = (index: number) => {
+    setActiveIndex(index);
+
+    document
+      .getElementById(optionId(index))
+      ?.scrollIntoView({ block: 'nearest' });
   };
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -388,22 +339,15 @@ export function LineItemTagsPanel(props: Props) {
     setActiveIndex(0);
   };
 
-  const moveActiveRow = (index: number) => {
-    setActiveIndex(index);
-
-    document
-      .getElementById(`${listId}-${index}`)
-      ?.scrollIntoView({ block: 'nearest' });
-  };
-
   const handleRowMouseMove = (
-    event: { clientX: number; clientY: number },
+    event: React.MouseEvent<HTMLDivElement>,
     index: number
   ) => {
-    if (
-      event.clientX === pointerRef.current.x &&
-      event.clientY === pointerRef.current.y
-    ) {
+    const hasPointerMoved =
+      event.clientX !== pointerRef.current.x ||
+      event.clientY !== pointerRef.current.y;
+
+    if (!hasPointerMoved) {
       return;
     }
 
@@ -422,7 +366,7 @@ export function LineItemTagsPanel(props: Props) {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
 
-      if (rowsCount) {
+      if (hasRows) {
         moveActiveRow((currentIndex + 1) % rowsCount);
       }
 
@@ -432,8 +376,8 @@ export function LineItemTagsPanel(props: Props) {
     if (event.key === 'ArrowUp') {
       event.preventDefault();
 
-      if (rowsCount) {
-        moveActiveRow(currentIndex <= 0 ? rowsCount - 1 : currentIndex - 1);
+      if (hasRows) {
+        moveActiveRow((currentIndex - 1 + rowsCount) % rowsCount);
       }
 
       return;
@@ -447,16 +391,10 @@ export function LineItemTagsPanel(props: Props) {
       return;
     }
 
-    if (event.key === 'Backspace' && !event.repeat && !query && names.length) {
-      removeLastTag();
-
-      return;
-    }
-
-    if (event.key === 'Tab' && !event.shiftKey && names.length) {
-      event.preventDefault();
-
-      clearButtonRef.current?.focus();
+    if (event.key === 'Backspace') {
+      if (!event.repeat && canRemoveLastTag) {
+        removeLastTag();
+      }
 
       return;
     }
@@ -464,14 +402,30 @@ export function LineItemTagsPanel(props: Props) {
     if (event.key === 'Tab') {
       if (event.shiftKey) {
         event.preventDefault();
+
+        onClose(true);
+
+        return;
       }
 
-      props.onClose(true);
+      if (hasTags) {
+        event.preventDefault();
+
+        clearButtonRef.current?.focus();
+
+        return;
+      }
+
+      onClose(true);
     }
   };
 
   const handleClearKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key === 'Tab' && event.shiftKey) {
+    if (event.key !== 'Tab') {
+      return;
+    }
+
+    if (event.shiftKey) {
       event.preventDefault();
 
       inputRef.current?.focus();
@@ -479,9 +433,7 @@ export function LineItemTagsPanel(props: Props) {
       return;
     }
 
-    if (event.key === 'Tab') {
-      props.onClose(true);
-    }
+    onClose(true);
   };
 
   const handlePanelKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -489,11 +441,19 @@ export function LineItemTagsPanel(props: Props) {
       event.preventDefault();
       event.stopPropagation();
 
-      props.onClose(true);
+      onClose(true);
     }
   };
 
-  if (!props.isOpen || !placement) {
+  const handlePanelMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === inputRef.current) {
+      return;
+    }
+
+    event.preventDefault();
+  };
+
+  if (!isOpen || !placement) {
     return null;
   }
 
@@ -514,9 +474,7 @@ export function LineItemTagsPanel(props: Props) {
         borderColor: colors.$24,
       }}
       onKeyDown={handlePanelKeyDown}
-      onMouseDown={(event) =>
-        event.target !== inputRef.current && event.preventDefault()
-      }
+      onMouseDown={handlePanelMouseDown}
     >
       <div className="shrink-0 p-2">
         <input
@@ -526,11 +484,7 @@ export function LineItemTagsPanel(props: Props) {
           aria-expanded="true"
           aria-controls={listId}
           aria-autocomplete="list"
-          aria-activedescendant={
-            rowsCount && currentIndex >= 0
-              ? `${listId}-${currentIndex}`
-              : undefined
-          }
+          aria-activedescendant={activeOptionId}
           aria-label={String(t('tags'))}
           className={classNames(
             'w-full rounded-md border px-2 py-1.5 text-sm focus:outline-none focus:ring-0',
@@ -549,9 +503,9 @@ export function LineItemTagsPanel(props: Props) {
           onKeyDown={handleInputKeyDown}
         />
 
-        {(errors?.errors?.name ?? errors?.message) && (
+        {errorMessage && (
           <Alert className="mt-2" type="danger">
-            {errors?.errors?.name ?? errors?.message}
+            {errorMessage}
           </Alert>
         )}
       </div>
@@ -560,17 +514,17 @@ export function LineItemTagsPanel(props: Props) {
         className="flex shrink-0 items-center justify-between px-3 pb-2 text-xs"
         style={{ color: colors.$22 }}
       >
-        <span>{trans('count_selected', { count: names.length })}</span>
+        <span>{trans('count_selected', { count: selectedNames.length })}</span>
 
         <button
           ref={clearButtonRef}
           type="button"
           data-cy="lineItemTagsClear"
           className={classNames('font-medium hover:underline', {
-            invisible: !names.length,
+            invisible: !hasTags,
           })}
           style={{ color: colors.$3 }}
-          tabIndex={names.length ? 0 : -1}
+          tabIndex={hasTags ? 0 : -1}
           onClick={clearTags}
           onKeyDown={handleClearKeyDown}
         >
@@ -586,86 +540,37 @@ export function LineItemTagsPanel(props: Props) {
         className="min-h-0 flex-1 overflow-y-auto border-t px-1 py-1"
         style={{ borderColor: colors.$24 }}
       >
-        {rows.map((option, index) => (
-          <div
+        {visibleOptions.map((option, index) => (
+          <LineItemTagOption
             key={option.name}
-            id={`${listId}-${index}`}
-            role="option"
-            aria-selected={names.includes(option.name)}
-            data-cy="lineItemTagOption"
-            className="flex cursor-pointer items-center gap-2 rounded-[0.1875rem] px-3 py-2 text-sm"
-            style={{
-              color: colors.$3,
-              backgroundColor:
-                index === currentIndex ? colors.$20 : 'transparent',
-            }}
+            id={optionId(index)}
+            option={option}
+            isSelected={selectedNames.includes(option.name)}
+            isActive={index === currentIndex}
             onMouseMove={(event) => handleRowMouseMove(event, index)}
             onClick={() => toggleTag(option)}
-          >
-            <span
-              className="flex h-4 w-4 shrink-0 items-center justify-center rounded border"
-              style={{
-                borderColor: names.includes(option.name)
-                  ? colors.$3
-                  : colors.$24,
-                backgroundColor: names.includes(option.name)
-                  ? colors.$3
-                  : 'transparent',
-              }}
-            >
-              {names.includes(option.name) && (
-                <Icon element={MdCheck} size={12} color={colors.$1} />
-              )}
-            </span>
-
-            <span
-              className="h-2.5 w-2.5 shrink-0 rounded-full"
-              style={
-                option.isLegacy
-                  ? { border: `1px dashed ${colors.$17}` }
-                  : { backgroundColor: tagPillColor(option) }
-              }
-            />
-
-            <span
-              className="truncate"
-              title={option.name}
-              style={{ color: option.isLegacy ? colors.$22 : colors.$3 }}
-            >
-              {option.name}
-            </span>
-          </div>
+          />
         ))}
 
         {canCreate && (
-          <div
-            id={`${listId}-${rows.length}`}
-            role="option"
-            aria-selected={false}
-            data-cy="lineItemCreateTagOption"
-            className="flex cursor-pointer items-center gap-2 rounded-[0.1875rem] px-3 py-2 text-sm font-medium"
-            style={{
-              color: colors.$3,
-              backgroundColor: isCreateRowActive ? colors.$20 : 'transparent',
-            }}
-            onMouseMove={(event) => handleRowMouseMove(event, rows.length)}
+          <LineItemCreateTagOption
+            id={optionId(visibleOptions.length)}
+            tagName={tagName}
+            isActive={isCreateRowActive}
+            onMouseMove={(event) =>
+              handleRowMouseMove(event, visibleOptions.length)
+            }
             onClick={createTag}
-          >
-            <Plus size="0.85rem" color={colors.$16} />
-
-            <span className="truncate">
-              {t('create')} <q>{tagName}</q>
-            </span>
-          </div>
+          />
         )}
 
-        {(isLoading || isCreating) && (
-          <div className="flex items-center justify-center gap-2 px-3 py-2">
+        {isBusy && (
+          <div className="flex items-center justify-center px-3 py-2">
             <Spinner />
           </div>
         )}
 
-        {isError && !isLoading && (
+        {showLoadError && (
           <div
             className="flex items-center justify-between gap-2 px-3 py-2 text-sm"
             style={{ color: colors.$17 }}
@@ -683,7 +588,7 @@ export function LineItemTagsPanel(props: Props) {
           </div>
         )}
 
-        {!isLoading && !isError && !isCreating && !rowsCount && (
+        {showEmpty && (
           <div
             className="px-3 py-2 text-sm font-medium"
             style={{ color: colors.$17 }}

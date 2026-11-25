@@ -105,8 +105,7 @@ export interface Tag {
 }
 
 export interface TagOption {
-  id?: string;
   name: string;
-  color?: string | null;
+  color: string | null;
   isLegacy?: boolean;
 }

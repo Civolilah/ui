@@ -83,6 +83,7 @@ interface Props {
   ) => unknown;
   createItem: () => unknown;
   deleteLineItem: (index: number) => unknown;
+  withTags: boolean;
 }
 
 export const isLineItemEmpty = (lineItem: InvoiceItem) => {
@@ -395,11 +396,35 @@ export function useResolveInputField(props: Props) {
     );
   };
 
+  const showProductSelector = (index: number) => {
+    return (
+      <ProductSelector
+        key={`product_key${resource?.line_items[index].product_key}`}
+        onChange={(value) =>
+          onProductChange(index, value.label, value.resource)
+        }
+        className="w-auto"
+        defaultValue={resource?.line_items[index].product_key}
+        onProductCreated={(product) =>
+          product && onProductChange(index, product.product_key, product)
+        }
+        clearButton
+        onInputValueChange={(value) => onChange('product_key', value, index)}
+        onClearButtonClick={() => handleProductChange(index, '', null)}
+        displayStockQuantity={location.pathname.startsWith('/invoices')}
+      />
+    );
+  };
+
   return (key: string, index: number) => {
     const property = resolveProperty(key);
 
     if (property === 'net_cost') {
       return null;
+    }
+
+    if (property === 'product_key' && !props.withTags) {
+      return showProductSelector(index);
     }
 
     if (property === 'product_key') {
@@ -410,23 +435,7 @@ export function useResolveInputField(props: Props) {
           value={resource?.line_items[index].tags}
           onChange={(value) => onChange('tags', value, index)}
         >
-          <ProductSelector
-            key={`${property}${resource?.line_items[index][property]}`}
-            onChange={(value) =>
-              onProductChange(index, value.label, value.resource)
-            }
-            className="w-auto"
-            defaultValue={resource?.line_items[index][property]}
-            onProductCreated={(product) =>
-              product && onProductChange(index, product.product_key, product)
-            }
-            clearButton
-            onInputValueChange={(value) =>
-              onChange('product_key', value, index)
-            }
-            onClearButtonClick={() => handleProductChange(index, '', null)}
-            displayStockQuantity={location.pathname.startsWith('/invoices')}
-          />
+          {showProductSelector(index)}
         </LineItemTagsSelector>
       );
     }

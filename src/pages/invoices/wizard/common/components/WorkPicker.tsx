@@ -137,7 +137,7 @@ export function WorkPicker({
                   </span>
                 ) : null}
 
-                <TagPills tags={row.tags} className="mt-1" />
+                <TagPills tags={row.productTags} className="mt-1" />
               </div>
 
               <span

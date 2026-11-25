@@ -8,41 +8,43 @@
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
+import classNames from 'classnames';
+import { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useColorScheme } from '$app/common/colors';
 import { TagOption } from '$app/common/interfaces/tag';
 import { XMark } from '$app/components/icons/XMark';
-import {
-  tagPillBackgroundColor,
-  tagPillColor,
-} from '$app/components/tags/TagPills';
+import { tagPillBackgroundColor, tagPillColor } from './TagPills';
 
 interface Props {
   option: TagOption;
-  onRemove?: () => void;
+  onRemove: (event: MouseEvent<HTMLButtonElement>) => void;
 }
 
 export function LineItemTagChip(props: Props) {
   const [t] = useTranslation();
+
   const colors = useColorScheme();
 
-  const { option } = props;
+  const { option, onRemove } = props;
 
   return (
-    <span
+    <div
       data-cy="lineItemTagChip"
-      className="inline-flex h-6 min-w-0 max-w-full items-center gap-1 rounded-full border px-2 text-xs font-medium"
+      className={classNames(
+        'inline-flex h-6 min-w-0 max-w-full items-center gap-1 rounded-full border px-2 text-xs font-medium',
+        { 'border-dashed': option.isLegacy }
+      )}
       style={{
         backgroundColor: option.isLegacy
           ? 'transparent'
           : tagPillBackgroundColor(option),
         borderColor: option.isLegacy ? colors.$17 : tagPillColor(option),
-        borderStyle: option.isLegacy ? 'dashed' : 'solid',
         color: option.isLegacy ? colors.$22 : colors.$3,
       }}
     >
       {!option.isLegacy && (
-        <span
+        <div
           className="h-2 w-2 shrink-0 rounded-full"
           style={{ backgroundColor: tagPillColor(option) }}
         />
@@ -52,18 +54,16 @@ export function LineItemTagChip(props: Props) {
         {option.name}
       </span>
 
-      {props.onRemove && (
-        <button
-          type="button"
-          data-cy="lineItemTagChipRemove"
-          className="ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={props.onRemove}
-          aria-label={`${t('remove')} ${option.name}`}
-        >
-          <XMark size="0.55rem" color={colors.$3} />
-        </button>
-      )}
-    </span>
+      <button
+        type="button"
+        data-cy="lineItemTagChipRemove"
+        className="ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={onRemove}
+        aria-label={`${t('remove')} ${option.name}`}
+      >
+        <XMark size="0.55rem" color={colors.$3} />
+      </button>
+    </div>
   );
 }

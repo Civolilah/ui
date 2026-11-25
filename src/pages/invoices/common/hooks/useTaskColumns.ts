@@ -165,10 +165,6 @@ export function useTaskColumns() {
       updatedVariables.push('$task.line_total');
     }
 
-    updatedVariables = updatedVariables.filter(
-      (variable) => variable !== '$task.tags'
-    );
-
     setColumns(updatedVariables);
   }, [company]);
 
