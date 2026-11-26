@@ -9,7 +9,7 @@
  */
 
 import { useColorScheme } from '$app/common/colors';
-import paymentType from '$app/common/constants/payment-type';
+import { usePaymentTypeLabel } from '$app/common/hooks/usePaymentTypeLabel';
 import { date, endpoint } from '$app/common/helpers';
 import { route } from '$app/common/helpers/route';
 import { useCurrentCompanyDateFormats } from '$app/common/hooks/useCurrentCompanyDateFormats';
@@ -71,6 +71,7 @@ export function ExpenseSlider() {
   const [t] = useTranslation();
 
   const colors = useColorScheme();
+  const paymentTypeLabel = usePaymentTypeLabel();
 
   const { dateFormat } = useCurrentCompanyDateFormats();
 
@@ -310,11 +311,7 @@ export function ExpenseSlider() {
                       pushContentToRight
                       noExternalPadding
                     >
-                      {t(
-                        paymentType[
-                          expense.payment_type_id as keyof typeof paymentType
-                        ]
-                      )}
+                      {paymentTypeLabel(expense.payment_type_id)}
                     </Element>
                   )}
                 </div>

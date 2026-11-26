@@ -8,16 +8,23 @@
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
+import { usePaymentTypeLabel } from '$app/common/hooks/usePaymentTypeLabel';
 import { PaymentType } from '$app/common/interfaces/statics';
 import { useStaticsQuery } from '$app/common/queries/statics';
 import { GenericSelectorProps } from '$app/components/CountrySelector';
 import { SelectField } from '$app/components/forms';
-import { useHiddenPaymentTypeProps } from '$app/components/payment-types/useHiddenPaymentTypeProps';
+import { usePaymentTypeSelectProps } from '$app/components/payment-types/usePaymentTypeSelectProps';
 
 export function PaymentTypeSelector(props: GenericSelectorProps) {
   const statics = useStaticsQuery();
 
-  const hiddenPaymentTypeProps = useHiddenPaymentTypeProps(props.value);
+  const paymentTypeLabel = usePaymentTypeLabel();
+  const paymentTypeSelectProps = usePaymentTypeSelectProps(props.value);
+
+  const paymentTypes = [...(statics.data?.payment_types ?? [])].sort(
+    (first: PaymentType, second: PaymentType) =>
+      paymentTypeLabel(first.id).localeCompare(paymentTypeLabel(second.id))
+  );
 
   return (
     <SelectField
@@ -26,15 +33,13 @@ export function PaymentTypeSelector(props: GenericSelectorProps) {
       withBlank
       errorMessage={props.errorMessage}
       customSelector
-      {...hiddenPaymentTypeProps}
+      {...paymentTypeSelectProps}
     >
-      {statics.data?.payment_types
-        .sort((a: PaymentType, b: PaymentType) => a.name.localeCompare(b.name))
-        .map((type: PaymentType, index: number) => (
-          <option key={index} value={type.id}>
-            {type.name}
-          </option>
-        ))}
+      {paymentTypes.map((type: PaymentType, index: number) => (
+        <option key={index} value={type.id}>
+          {paymentTypeLabel(type.id)}
+        </option>
+      ))}
     </SelectField>
   );
 }

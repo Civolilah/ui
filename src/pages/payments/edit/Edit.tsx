@@ -24,7 +24,7 @@ import { ClientCard } from '$app/pages/clients/show/components/ClientCard';
 import { ValidationBag } from '$app/common/interfaces/validation-bag';
 import { useColorScheme } from '$app/common/colors';
 import { usePaymentTypes } from '$app/common/hooks/usePaymentTypes';
-import { useHiddenPaymentTypeProps } from '$app/components/payment-types/useHiddenPaymentTypeProps';
+import { usePaymentTypeSelectProps } from '$app/components/payment-types/usePaymentTypeSelectProps';
 import { TagPillSelector } from '$app/components/tags/TagPillSelector';
 import { TAG_ENTITY_TYPES } from '$app/common/interfaces/tag';
 
@@ -45,7 +45,7 @@ export default function Edit() {
 
   const { setPayment, payment, errors } = context;
 
-  const hiddenPaymentTypeProps = useHiddenPaymentTypeProps(payment?.type_id);
+  const paymentTypeSelectProps = usePaymentTypeSelectProps(payment?.type_id);
 
   const [convertCurrency, setConvertCurrency] = useState(
     Boolean(payment?.exchange_currency_id)
@@ -108,7 +108,7 @@ export default function Edit() {
           withBlank
           customSelector
           style={{ color: colors.$3, colorScheme: colors.$0 }}
-          {...hiddenPaymentTypeProps}
+          {...paymentTypeSelectProps}
         >
           {paymentTypes.map(([key, value], index) => (
             <option value={key} key={index}>

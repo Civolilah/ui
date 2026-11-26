@@ -8,11 +8,11 @@
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
-import paymentType from '$app/common/constants/payment-type';
 import { useInvoiceEditorPaths } from '$app/common/hooks/useInvoiceEditor';
 import { date, getEntityState } from '$app/common/helpers';
 import { route } from '$app/common/helpers/route';
 import { useFormatMoney } from '$app/common/hooks/money/useFormatMoney';
+import { usePaymentTypeLabel } from '$app/common/hooks/usePaymentTypeLabel';
 import { useCurrentCompanyDateFormats } from '$app/common/hooks/useCurrentCompanyDateFormats';
 import { Expense } from '$app/common/interfaces/expense';
 import { RecurringExpense } from '$app/common/interfaces/recurring-expense';
@@ -22,7 +22,6 @@ import { DropdownElement } from '$app/components/dropdown/DropdownElement';
 import { EntityStatus } from '$app/components/EntityStatus';
 import { Icon } from '$app/components/icons/Icon';
 import { Action } from '$app/components/ResourceActions';
-import { StatusBadge } from '$app/components/StatusBadge';
 import { Tooltip } from '$app/components/Tooltip';
 import { DataTableColumnsExtended } from '$app/pages/invoices/common/hooks/useInvoiceColumns';
 import { recurringExpenseAtom } from '$app/pages/recurring-expenses/common/atoms';
@@ -315,6 +314,7 @@ export function useExpenseColumns() {
   const formatMoney = useFormatMoney();
   const reactSettings = useReactSettings();
   const resolveUserName = useResolveUserName();
+  const paymentTypeLabel = usePaymentTypeLabel();
   const formatCustomFieldValue = useFormatCustomFieldValue();
   const calculateExpenseAmount = useCalculateExpenseAmount();
   const calculateExpenseExclusiveAmount = useCalculateExpenseExclusiveAmount();
@@ -537,9 +537,7 @@ export function useExpenseColumns() {
       column: 'payment_type',
       id: 'payment_type_id',
       label: t('payment_type'),
-      format: (value) => (
-        <StatusBadge for={paymentType} code={value} headless />
-      ),
+      format: (value) => paymentTypeLabel(String(value)),
     },
     {
       column: 'private_notes',

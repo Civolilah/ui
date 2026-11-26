@@ -36,7 +36,7 @@ import { PaymentStatus } from './PaymentStatus';
 import { InvoiceStatus } from '$app/pages/invoices/common/components/InvoiceStatus';
 import { PaymentActivity } from '$app/common/interfaces/payment-activity';
 import { CreditStatus } from '$app/pages/credits/common/components/CreditStatus';
-import paymentType from '$app/common/constants/payment-type';
+import { usePaymentTypeLabel } from '$app/common/hooks/usePaymentTypeLabel';
 import { useCompanyTimeFormat } from '$app/common/hooks/useCompanyTimeFormat';
 import styled from 'styled-components';
 import { useColorScheme } from '$app/common/colors';
@@ -66,6 +66,7 @@ export function PaymentSlider() {
   const invoicePaths = useInvoiceEditorPaths();
   const [t] = useTranslation();
   const colors = useColorScheme();
+  const paymentTypeLabel = usePaymentTypeLabel();
   const navigate = useNavigate();
 
   const actions = useActions({
@@ -189,9 +190,7 @@ export function PaymentSlider() {
               noExternalPadding
               style={{ borderColor: colors.$20 }}
             >
-              {payment
-                ? t(paymentType[payment.type_id as keyof typeof paymentType])
-                : null}
+              {payment ? paymentTypeLabel(payment.type_id) : null}
             </Element>
 
             <Element

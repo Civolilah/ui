@@ -46,7 +46,7 @@ function HiddenPaymentTypeLabel({ label }: HiddenPaymentTypeLabelProps) {
   );
 }
 
-export function useHiddenPaymentTypeProps(
+export function usePaymentTypeSelectProps(
   value?: string,
   hiddenPaymentTypes?: string
 ): Pick<SelectProps, 'filterOption' | 'formatOptionLabel'> {
@@ -58,11 +58,25 @@ export function useHiddenPaymentTypeProps(
     hiddenPaymentTypes ?? company?.settings?.hidden_payment_types
   );
 
-  if (!hiddenIds.length) {
-    return {};
-  }
-
   const paymentTypes = statics?.payment_types ?? [];
+
+  const matchesSearch = (
+    option: FilterOptionOption<SelectOption>,
+    inputValue: string
+  ) => {
+    const stockName =
+      paymentTypes.find((paymentType) => paymentType.id === option.value)
+        ?.name ?? '';
+
+    return (
+      defaultFilterOption(option, inputValue) ||
+      defaultFilterOption({ ...option, label: stockName }, inputValue)
+    );
+  };
+
+  if (!hiddenIds.length) {
+    return { filterOption: matchesSearch };
+  }
 
   const isEverythingHidden =
     paymentTypes.length > 0 &&
@@ -78,7 +92,7 @@ export function useHiddenPaymentTypeProps(
       inputValue: string
     ) => {
       if (inputValue) {
-        return defaultFilterOption(option, inputValue);
+        return matchesSearch(option, inputValue);
       }
 
       return isEverythingHidden || !isHiddenOption(option.value);

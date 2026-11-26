@@ -20,6 +20,7 @@ import {
 import { useCurrentSettingsLevel } from '$app/common/hooks/useCurrentSettingsLevel';
 import { useDisableSettingsField } from '$app/common/hooks/useDisableSettingsField';
 import { useInjectCompanyChanges } from '$app/common/hooks/useInjectCompanyChanges';
+import { usePaymentTypeLabel } from '$app/common/hooks/usePaymentTypeLabel';
 import { useTitle } from '$app/common/hooks/useTitle';
 import { PaymentTerm } from '$app/common/interfaces/payment-term';
 import { usePaymentTermsQuery } from '$app/common/queries/payment-terms';
@@ -30,7 +31,7 @@ import { NumberInputField } from '$app/components/forms/NumberInputField';
 import Toggle from '$app/components/forms/Toggle';
 import { Settings } from '$app/components/layouts/Settings';
 import { PropertyCheckbox } from '$app/components/PropertyCheckbox';
-import { useHiddenPaymentTypeProps } from '$app/components/payment-types/useHiddenPaymentTypeProps';
+import { usePaymentTypeSelectProps } from '$app/components/payment-types/usePaymentTypeSelectProps';
 import { SettingsLabel } from '$app/components/SettingsLabel';
 import { Link, SelectField } from '../../../components/forms';
 import { companySettingsErrorsAtom } from '../common/atoms';
@@ -62,14 +63,23 @@ export function OnlinePayments() {
     ? company?.settings?.hidden_payment_types
     : undefined;
 
-  const defaultPaymentTypeProps = useHiddenPaymentTypeProps(
+  const defaultPaymentTypeProps = usePaymentTypeSelectProps(
     company?.settings?.payment_type_id,
     hiddenPaymentTypes
   );
 
-  const expensePaymentTypeProps = useHiddenPaymentTypeProps(
+  const expensePaymentTypeProps = usePaymentTypeSelectProps(
     company?.settings?.default_expense_payment_type_id,
     hiddenPaymentTypes
+  );
+
+  const paymentTypeLabel = usePaymentTypeLabel(
+    isCompanySettingsActive ? company?.settings?.translations : undefined
+  );
+
+  const paymentTypes = [...(statics?.payment_types ?? [])].sort(
+    (first, second) =>
+      paymentTypeLabel(first.id).localeCompare(paymentTypeLabel(second.id))
   );
 
   const pages = [
@@ -361,13 +371,11 @@ export function OnlinePayments() {
             customSelector
             {...defaultPaymentTypeProps}
           >
-            {statics?.payment_types.map(
-              (type: { id: string; name: string }) => (
-                <option key={type.id} value={type.id}>
-                  {type.name}
-                </option>
-              )
-            )}
+            {paymentTypes.map((type: { id: string; name: string }) => (
+              <option key={type.id} value={type.id}>
+                {paymentTypeLabel(type.id)}
+              </option>
+            ))}
           </SelectField>
         </Element>
 
@@ -437,13 +445,11 @@ export function OnlinePayments() {
             customSelector
             {...expensePaymentTypeProps}
           >
-            {statics?.payment_types.map(
-              (type: { id: string; name: string }) => (
-                <option key={type.id} value={type.id}>
-                  {type.name}
-                </option>
-              )
-            )}
+            {paymentTypes.map((type: { id: string; name: string }) => (
+              <option key={type.id} value={type.id}>
+                {paymentTypeLabel(type.id)}
+              </option>
+            ))}
           </SelectField>
         </Element>
 

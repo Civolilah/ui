@@ -15,6 +15,11 @@ import {
   parseHiddenPaymentTypes,
   serializeHiddenPaymentTypes,
 } from '$app/common/helpers/payment-types/hidden-payment-types';
+import {
+  customPaymentTypeLabel,
+  isRenamablePaymentType,
+  renamePaymentType,
+} from '$app/common/helpers/payment-types/payment-type-labels';
 import { useCompanyChanges } from '$app/common/hooks/useCompanyChanges';
 import { PaymentType } from '$app/common/interfaces/statics';
 import { useStaticsQuery } from '$app/common/queries/statics';
@@ -22,46 +27,8 @@ import { Card } from '$app/components/cards';
 import { InputField } from '$app/components/forms';
 import Toggle from '$app/components/forms/Toggle';
 import { useHandleCurrentCompanyChangeProperty } from '../../common/hooks/useHandleCurrentCompanyChange';
-
-interface PaymentTypeRowProps {
-  paymentType: PaymentType;
-  isShown: boolean;
-  isDefault: boolean;
-  onToggle: (isShown: boolean) => void;
-}
-
-function PaymentTypeRow({
-  paymentType,
-  isShown,
-  isDefault,
-  onToggle,
-}: PaymentTypeRowProps) {
-  const [t] = useTranslation();
-
-  const colors = useColorScheme();
-
-  return (
-    <div
-      className="flex items-center gap-x-2 rounded-md border px-3 py-2"
-      style={{ borderColor: colors.$24 }}
-    >
-      <Toggle
-        label={paymentType.name}
-        checked={isShown}
-        onValueChange={onToggle}
-      />
-
-      {isDefault && (
-        <span
-          className="text-xs px-1.5 rounded border whitespace-nowrap"
-          style={{ color: colors.$22, borderColor: colors.$24 }}
-        >
-          {t('default')}
-        </span>
-      )}
-    </div>
-  );
-}
+import { PaymentTypeRow } from './PaymentTypeRow';
+import { RenamePaymentTypeModal } from './RenamePaymentTypeModal';
 
 export function PaymentTypes() {
   const [t] = useTranslation();
@@ -73,20 +40,37 @@ export function PaymentTypes() {
   const handleChange = useHandleCurrentCompanyChangeProperty();
 
   const [search, setSearch] = useState<string>('');
+  const [paymentTypeToRename, setPaymentTypeToRename] = useState<PaymentType>();
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState<boolean>(false);
+  const [renameCount, setRenameCount] = useState<number>(0);
+
+  const translations = companyChanges?.settings?.translations;
 
   const hiddenIds = parseHiddenPaymentTypes(
     companyChanges?.settings?.hidden_payment_types
   );
 
+  const shownName = (paymentType: PaymentType) => {
+    return (
+      customPaymentTypeLabel(translations, paymentType.id) || paymentType.name
+    );
+  };
+
   const paymentTypes = [...(statics?.payment_types ?? [])].sort(
-    (first, second) => first.name.localeCompare(second.name)
+    (first, second) => shownName(first).localeCompare(shownName(second))
   );
 
   const query = search.trim().toLowerCase();
 
   const filteredPaymentTypes = paymentTypes.filter((paymentType) =>
-    paymentType.name.toLowerCase().includes(query)
+    `${shownName(paymentType)} ${paymentType.name}`
+      .toLowerCase()
+      .includes(query)
   );
+
+  const takenNames = paymentTypes
+    .filter((paymentType) => paymentType.id !== paymentTypeToRename?.id)
+    .map((paymentType) => shownName(paymentType).toLowerCase());
 
   const isEveryTypeShown = !paymentTypes.some((paymentType) =>
     hiddenIds.includes(paymentType.id)
@@ -110,6 +94,25 @@ export function PaymentTypes() {
       isShown
         ? hiddenIds.filter((hiddenId) => hiddenId !== id)
         : [...hiddenIds, id]
+    );
+  };
+
+  const handleOpenRename = (paymentType: PaymentType) => {
+    setPaymentTypeToRename(paymentType);
+    setRenameCount((current) => current + 1);
+    setIsRenameModalOpen(true);
+  };
+
+  const handleRename = (name: string) => {
+    setIsRenameModalOpen(false);
+
+    if (!paymentTypeToRename) {
+      return;
+    }
+
+    handleChange(
+      'settings.translations',
+      renamePaymentType(translations, paymentTypeToRename, name)
     );
   };
 
@@ -143,12 +146,15 @@ export function PaymentTypes() {
           {filteredPaymentTypes.map((paymentType) => (
             <PaymentTypeRow
               key={paymentType.id}
-              paymentType={paymentType}
+              customName={customPaymentTypeLabel(translations, paymentType.id)}
+              stockName={paymentType.name}
               isShown={!hiddenIds.includes(paymentType.id)}
               isDefault={
                 paymentType.id === companyChanges?.settings?.payment_type_id
               }
+              isRenamable={isRenamablePaymentType(paymentType.id)}
               onToggle={(isShown) => handleToggle(paymentType.id, isShown)}
+              onRename={() => handleOpenRename(paymentType)}
             />
           ))}
         </div>
@@ -162,6 +168,19 @@ export function PaymentTypes() {
           {t('no_records_found')}
         </div>
       )}
+
+      <RenamePaymentTypeModal
+        key={renameCount}
+        visible={isRenameModalOpen}
+        paymentType={paymentTypeToRename}
+        currentName={customPaymentTypeLabel(
+          translations,
+          paymentTypeToRename?.id ?? ''
+        )}
+        takenNames={takenNames}
+        onClose={() => setIsRenameModalOpen(false)}
+        onSave={handleRename}
+      />
     </Card>
   );
 }

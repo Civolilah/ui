@@ -8,21 +8,20 @@
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
-import { useTranslation } from 'react-i18next';
 import paymentType from '$app/common/constants/payment-type';
+import { usePaymentTypeLabel } from './usePaymentTypeLabel';
 
 export function usePaymentTypes() {
-  const [t] = useTranslation();
+  const paymentTypeLabel = usePaymentTypeLabel();
 
   let translatedPaymentTypeList: Record<string, string> = {};
 
-  translatedPaymentTypeList = Object.entries(paymentType).reduce(
-    (translatedTypes, [key, value]) => {
-      translatedTypes[key as keyof typeof translatedTypes] = t(value);
-      return translatedTypes;
-    },
-    {}
-  );
+  translatedPaymentTypeList = Object.keys(paymentType).reduce<
+    Record<string, string>
+  >((translatedTypes, key) => {
+    translatedTypes[key] = paymentTypeLabel(key);
+    return translatedTypes;
+  }, {});
 
   const paymentTypeKeyValueArray = Object.entries(translatedPaymentTypeList);
 

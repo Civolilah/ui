@@ -8,16 +8,15 @@
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
-import paymentType from '$app/common/constants/payment-type';
 import { useInvoiceEditorPaths } from '$app/common/hooks/useInvoiceEditor';
 import { date } from '$app/common/helpers';
 import { route } from '$app/common/helpers/route';
 import { useFormatMoney } from '$app/common/hooks/money/useFormatMoney';
+import { usePaymentTypeLabel } from '$app/common/hooks/usePaymentTypeLabel';
 import { useCurrentCompanyDateFormats } from '$app/common/hooks/useCurrentCompanyDateFormats';
 import { useResolveCurrency } from '$app/common/hooks/useResolveCurrency';
 import { Payment } from '$app/common/interfaces/payment';
 import { EntityStatus } from '$app/components/EntityStatus';
-import { StatusBadge } from '$app/components/StatusBadge';
 import { Tooltip } from '$app/components/Tooltip';
 import { DataTableColumnsExtended } from '$app/pages/invoices/common/hooks/useInvoiceColumns';
 import { useTranslation } from 'react-i18next';
@@ -103,6 +102,7 @@ export function usePaymentColumns() {
   const reactSettings = useReactSettings();
   const resolveCurrency = useResolveCurrency();
   const resolveUserName = useResolveUserName();
+  const paymentTypeLabel = usePaymentTypeLabel();
   const formatCustomFieldValue = useFormatCustomFieldValue();
 
   const calculateConvertedAmount = (payment: Payment) => {
@@ -224,9 +224,7 @@ export function usePaymentColumns() {
       column: 'type',
       id: 'type_id',
       label: t('type'),
-      format: (value) => (
-        <StatusBadge for={paymentType} code={value} headless />
-      ),
+      format: (value) => paymentTypeLabel(String(value)),
     },
     {
       column: 'transaction_reference',

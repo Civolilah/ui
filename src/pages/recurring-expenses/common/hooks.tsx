@@ -16,6 +16,7 @@ import { date, endpoint, getEntityState } from '$app/common/helpers';
 import { useCurrentCompanyDateFormats } from '$app/common/hooks/useCurrentCompanyDateFormats';
 import { EntityStatus } from '$app/components/EntityStatus';
 import { useFormatMoney } from '$app/common/hooks/money/useFormatMoney';
+import { usePaymentTypeLabel } from '$app/common/hooks/usePaymentTypeLabel';
 import { route } from '$app/common/helpers/route';
 import { Divider } from '$app/components/cards/Divider';
 import { DropdownElement } from '$app/components/dropdown/DropdownElement';
@@ -28,7 +29,6 @@ import { request } from '$app/common/helpers/request';
 import { toast } from '$app/common/helpers/toast/toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { expenseAtom } from '$app/pages/expenses/common/atoms';
-import paymentType from '$app/common/constants/payment-type';
 import { DataTableColumnsExtended } from '$app/pages/invoices/common/hooks/useInvoiceColumns';
 import { Dispatch, SetStateAction } from 'react';
 import { ValidationBag } from '$app/common/interfaces/validation-bag';
@@ -141,6 +141,7 @@ export function useRecurringExpenseColumns() {
   const [t] = useTranslation();
 
   const disableNavigation = useDisableNavigation();
+  const paymentTypeLabel = usePaymentTypeLabel();
 
   const { dateFormat } = useCurrentCompanyDateFormats();
 
@@ -348,9 +349,7 @@ export function useRecurringExpenseColumns() {
       column: 'payment_type',
       id: 'payment_type_id',
       label: t('payment_type'),
-      format: (value) => (
-        <StatusBadge for={paymentType} code={value} headless />
-      ),
+      format: (value) => paymentTypeLabel(String(value)),
     },
     {
       column: 'private_notes',

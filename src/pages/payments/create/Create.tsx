@@ -40,7 +40,7 @@ import { NumberInputField } from '$app/components/forms/NumberInputField';
 import Toggle from '$app/components/forms/Toggle';
 import { InvoiceSelector } from '$app/components/invoices/InvoiceSelector';
 import { Default } from '$app/components/layouts/Default';
-import { useHiddenPaymentTypeProps } from '$app/components/payment-types/useHiddenPaymentTypeProps';
+import { usePaymentTypeSelectProps } from '$app/components/payment-types/usePaymentTypeSelectProps';
 import { paymentAtom } from '../common/atoms';
 import { useApplyInvoiceTableColumns } from '../common/hooks/useApplyInvoiceTableColumns';
 import { TableTotalFooter } from './components/TableTotalFooter';
@@ -94,7 +94,7 @@ export default function Create() {
   );
   const [convertCurrency, setConvertCurrency] = useState(false);
 
-  const hiddenPaymentTypeProps = useHiddenPaymentTypeProps(payment?.type_id);
+  const paymentTypeSelectProps = usePaymentTypeSelectProps(payment?.type_id);
 
   const [initialEndpoints, setInitialEndpoints] = useState<{
     invoices: string;
@@ -590,7 +590,7 @@ export default function Create() {
               errorMessage={errors?.errors.type_id}
               withBlank
               customSelector
-              {...hiddenPaymentTypeProps}
+              {...paymentTypeSelectProps}
             >
               {paymentTypes.map(([key, value], index) => (
                 <option value={key} key={index}>
