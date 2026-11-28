@@ -38,6 +38,8 @@ import {
 import { QuickCreatePopover } from '$app/components/QuickCreatePopover';
 import { Search } from '$app/pages/dashboard/components/Search';
 import CommonProps from '../../common/interfaces/common-props.interface';
+import { AiAssistant } from '../ai/AiAssistant';
+import { useAiAssistant, useIsAiAvailable } from '../ai/common/hooks';
 import { AccountPlanExpired } from '../banners/AccountPlanExpired';
 import { ActivateCompany } from '../banners/ActivateCompany';
 import { EInvoiceCredits } from '../banners/EInvoiceCredits';
@@ -97,6 +99,9 @@ export function Default(props: Props) {
 
   const saveBtn = useAtomValue(saveBtnAtom);
   const navigationTopRightElement = useNavigationTopRightElement();
+
+  const isAiAvailable = useIsAiAvailable();
+  const { isOpen: isAiOpen } = useAiAssistant();
 
   useSocketEvent<Invoice>({
     on: ['App\\Events\\Invoice\\InvoiceWasViewed'],
@@ -166,7 +171,13 @@ export function Default(props: Props) {
 
   return (
     <div>
-      <div className="fixed bottom-4 right-4 z-50 flex items-end flex-col-reverse space-y-4 space-y-reverse">
+      <div
+        className={classNames(
+          'fixed right-4 z-50 flex items-end flex-col-reverse space-y-4 space-y-reverse',
+          isAiAvailable && !isAiOpen ? 'bottom-20' : 'bottom-4',
+          { 'max-sm:hidden sm:right-[25rem]': isAiOpen }
+        )}
+      >
         <ActivateCompany />
         <VerifyEmail />
         <VerifyPhone />
@@ -351,7 +362,9 @@ export function Default(props: Props) {
 
           <div
             style={{ color: colors.$3, backgroundColor: colors.$23 }}
-            className="p-4 xl:px-6 dark:text-gray-100"
+            className={classNames('p-4 xl:px-6 dark:text-gray-100', {
+              'pb-20': isAiAvailable,
+            })}
           >
             {props.children}
           </div>
@@ -359,6 +372,8 @@ export function Default(props: Props) {
       </div>
 
       <Feedback />
+
+      <AiAssistant />
     </div>
   );
 }

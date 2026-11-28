@@ -109,6 +109,7 @@
     "check": "biome check --write --unsafe src/",
     "test": "vitest run",
     "test:watch": "vitest",
+    "eval:ai": "vitest run --config tests/ai/vitest.config.ts",
     "test:e2e": "playwright test --workers=1",
     "test:e2e:parallel": "node scripts/playwright-spec-orchestrator.mjs",
     "test:e2e:isolated": "node scripts/playwright-spec-orchestrator.mjs",

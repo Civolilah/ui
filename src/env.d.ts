@@ -25,6 +25,10 @@ interface ImportMetaEnv extends Readonly<Record<string, string>> {
   readonly VITE_SENTRY_RELEASE: string;
   readonly VITE_SENTRY_TRACES_SAMPLE_RATE: string;
   readonly VITE_SENTRY_TRACE_PROPAGATION_TARGETS: string;
+  readonly VITE_AI_PROVIDER: string;
+  readonly VITE_AI_MODEL: string;
+  readonly VITE_OPENAI_API_KEY: string;
+  readonly VITE_GEMINI_API_KEY: string;
 }
 
 interface ImportMeta {
